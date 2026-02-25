@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<!-- ═══════════════════════════════════════════════════════
+     Ocean View Resort – Thymeleaf Fragments
+     Shared head, sidebar, topbar, and footer components
+     ═══════════════════════════════════════════════════════ -->
+
+<!-- ── HEAD fragment (CDN libs + custom CSS) ──────── -->
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="ctx" th:content="@{/}"/>
+    <title th:text="${title} + ' – Ocean View Resort'">Ocean View Resort</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/style.css}" rel="stylesheet"/>
+</head>
+
+<body>
+
+<!-- ── SIDEBAR fragment ──────────────────────────── -->
+<nav th:fragment="sidebar" class="ov-sidebar" id="sidebar">
+    <!-- Brand -->
+    <div class="sidebar-brand">
+        <i class="fas fa-water"></i>
+        <div class="brand-text">
+            Ocean View Resort
+            <small>Management System</small>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="flex-grow-1 py-2">
+        <div class="nav-section">Main</div>
+        <a th:href="@{/dashboard}" class="nav-link">
+            <i class="fas fa-th-large"></i> Dashboard
+        </a>
+
+        <div class="nav-section">Reservations</div>
+        <a th:href="@{/reservations}" class="nav-link">
+            <i class="fas fa-calendar-alt"></i> All Reservations
+        </a>
+        <a th:href="@{/reservations/create}" class="nav-link">
+            <i class="fas fa-plus-circle"></i> New Reservation
+        </a>
+
+        <div class="nav-section">Rooms</div>
+        <a th:href="@{/rooms}" class="nav-link">
+            <i class="fas fa-door-open"></i> Room Management
+        </a>
+
+        <div class="nav-section">Billing</div>
+        <a th:href="@{/bills}" class="nav-link">
+            <i class="fas fa-file-invoice-dollar"></i> Bills &amp; Payments
+        </a>
+
+        <div class="nav-section" data-role="MANAGER">Reports</div>
+        <a th:href="@{/reports}" class="nav-link" data-role="MANAGER">
+            <i class="fas fa-chart-bar"></i> Reports
+        </a>
+
+        <div class="nav-section">Support</div>
+        <a th:href="@{/help}" class="nav-link">
+            <i class="fas fa-question-circle"></i> Help &amp; FAQ
+        </a>
+    </div>
+
+    <!-- User Footer -->
+    <div class="sidebar-footer">
+        <div class="user-info">
+            <div class="user-avatar">U</div>
+            <div class="user-details">
+                <div class="user-name">Guest</div>
+                <div class="user-role">—</div>
+            </div>
+        </div>
+        <a href="#" onclick="OVAuth.clear(); window.location.href=CTX+'/login';"
+           class="nav-link mt-2" style="color:rgba(255,255,255,.5)">
+            <i class="fas fa-sign-out-alt"></i> Sign Out
+        </a>
+    </div>
+</nav>
+
+<!-- ── SIDEBAR OVERLAY (mobile) ──────────────────── -->
+<div th:fragment="sidebarOverlay" class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ── TOPBAR fragment ───────────────────────────── -->
+<header th:fragment="topbar(pageTitle)" class="ov-topbar">
+    <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('show');document.getElementById('sidebarOverlay').classList.toggle('show')">
+        <i class="fas fa-bars"></i>
+    </button>
+    <h4 class="page-title mb-0" th:text="${pageTitle}">Dashboard</h4>
+    <div class="topbar-actions">
+        <button class="btn-icon" title="Notifications">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge" id="notifCount" style="display:none">0</span>
+        </button>
+        <a th:href="@{/profile}" class="btn-icon" title="Profile">
+            <i class="fas fa-user"></i>
+        </a>
+    </div>
+</header>
+
+<!-- ── SCRIPTS fragment ──────────────────────────── -->
+<div th:fragment="scripts">
+    <!-- Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- App JS -->
+    <script th:src="@{/js/app.js}"></script>
+</div>
+
+</body>
+</html>

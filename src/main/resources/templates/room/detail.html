@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Room Details')}">
+    <title>Room Details – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Room Details')}"></header>
+
+    <div class="ov-content">
+        <a th:href="@{/rooms}" class="btn btn-outline-ocean mb-4 animate-in">
+            <i class="fas fa-arrow-left me-2"></i>Back to Rooms
+        </a>
+
+        <div class="row g-4" id="roomContent" style="display:none">
+            <!-- Room Image & Key Info -->
+            <div class="col-lg-5 animate-in delay-1">
+                <div class="ov-card overflow-hidden">
+                    <div class="room-img" style="height:280px;border-radius:0" id="roomHero">
+                        <i class="fas fa-bed" id="heroIcon" style="font-size:4rem"></i>
+                        <div class="room-price" id="heroPrice">—</div>
+                    </div>
+                    <div class="card-body-ov">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="fw-bold mb-0" id="roomTitle">—</h3>
+                            <span class="badge-status" id="roomStatus">—</span>
+                        </div>
+                        <div class="mb-3" id="roomTypeBadge"></div>
+                        <p class="text-muted" id="roomDesc">No description available.</p>
+
+                        <hr class="my-3"/>
+
+                        <div class="row g-3 text-center">
+                            <div class="col-4">
+                                <div class="p-2 rounded-3" style="background:var(--ov-primary-light)">
+                                    <i class="fas fa-users text-ocean d-block mb-1" style="font-size:1.3rem"></i>
+                                    <small class="text-muted d-block" style="font-size:.7rem">Capacity</small>
+                                    <strong id="roomCapacity">—</strong>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 rounded-3" style="background:#f0fdf4">
+                                    <i class="fas fa-pound-sign d-block mb-1" style="font-size:1.3rem;color:#16a34a"></i>
+                                    <small class="text-muted d-block" style="font-size:.7rem">Per Night</small>
+                                    <strong id="roomRate">—</strong>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 rounded-3" style="background:#eff6ff">
+                                    <i class="fas fa-layer-group d-block mb-1" style="font-size:1.3rem;color:#2563eb"></i>
+                                    <small class="text-muted d-block" style="font-size:.7rem">Floor</small>
+                                    <strong id="roomFloor">—</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions (Manager) -->
+                <div class="ov-card mt-3" data-role="MANAGER">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-cog me-2 text-ocean"></i>Room Actions</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-ocean" onclick="editRoom()">
+                                <i class="fas fa-edit me-2"></i>Edit Room
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="toggleAvailability()">
+                                <i class="fas fa-sync-alt me-2"></i>Toggle Availability
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="deleteRoomDetail()">
+                                <i class="fas fa-trash me-2"></i>Delete Room
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Detail Panels -->
+            <div class="col-lg-7">
+                <!-- Amenities -->
+                <div class="ov-card mb-3 animate-in delay-2">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-concierge-bell me-2 text-ocean"></i>Room Amenities</h6>
+                        <div class="row g-2" id="amenitiesList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Reservations -->
+                <div class="ov-card mb-3 animate-in delay-2">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-calendar-alt me-2 text-ocean"></i>Recent Reservations</h6>
+                        <div class="table-responsive">
+                            <table class="ov-table" style="min-width:auto">
+                                <thead>
+                                    <tr>
+                                        <th>Reservation #</th>
+                                        <th>Guest</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="roomReservations">
+                                    <tr><td colspan="5" class="text-center text-muted py-3">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Summary -->
+                <div class="ov-card animate-in delay-3">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-tag me-2 text-ocean"></i>Pricing Information</h6>
+                        <div class="row g-3" id="pricingInfo">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:var(--ov-primary-light)">
+                                    <small class="text-muted d-block">Standard Rate</small>
+                                    <h5 class="fw-bold mb-0" id="priceStandard">—</h5>
+                                    <small class="text-muted">per night</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:#fdf2f8">
+                                    <small class="text-muted d-block">Weekly Rate (7 nights)</small>
+                                    <h5 class="fw-bold mb-0" id="priceWeekly">—</h5>
+                                    <small class="text-muted">~5% discount</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingRoom" class="text-center py-5">
+            <div class="spinner-border text-ocean" role="status"><span class="visually-hidden">Loading...</span></div>
+            <p class="text-muted mt-2">Loading room details...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Room Modal -->
+<div class="modal fade" id="editRoomModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:var(--ov-radius)">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Edit Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editRoomForm" onsubmit="saveRoom(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Room Number</label>
+                        <input type="text" class="form-control ov-input" id="editRoomNumber" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Room Type</label>
+                        <select class="form-select ov-input" id="editRoomType" required>
+                            <option value="STANDARD">Standard</option>
+                            <option value="DELUXE">Deluxe</option>
+                            <option value="SUITE">Suite</option>
+                            <option value="PRESIDENTIAL">Presidential</option>
+                            <option value="FAMILY">Family</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Rate per Night (£)</label>
+                        <input type="number" class="form-control ov-input" id="editRoomRate" step="0.01" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Max Occupancy</label>
+                        <input type="number" class="form-control ov-input" id="editRoomCapacity" min="1" max="10" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea class="form-control ov-input" id="editRoomDescField" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-ocean w-100">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+let room = null;
+const roomId = window.location.pathname.replace(CTX, '').replace('/rooms/', '');
+const amenityMap = {
+    STANDARD:      ['fa-wifi|Wi-Fi','fa-tv|Smart TV','fa-snowflake|AC','fa-phone|Phone','fa-coffee|Kettle'],
+    DELUXE:        ['fa-wifi|Wi-Fi','fa-tv|Smart TV','fa-snowflake|AC','fa-phone|Phone','fa-coffee|Mini Bar','fa-bath|Bathtub'],
+    SUITE:         ['fa-wifi|Wi-Fi','fa-tv|65" Smart TV','fa-snowflake|Climate Control','fa-phone|Phone','fa-wine-glass|Mini Bar','fa-bath|Rain Shower','fa-couch|Living Area','fa-utensils|Room Service'],
+    PRESIDENTIAL:  ['fa-wifi|High-Speed Wi-Fi','fa-tv|75" Smart TV','fa-snowflake|Climate Control','fa-phone|Direct Line','fa-wine-glass|Premium Bar','fa-bath|Jacuzzi','fa-couch|Living Room','fa-utensils|24h Service','fa-dumbbell|Gym Access','fa-swimmer|Pool Access'],
+    FAMILY:        ['fa-wifi|Wi-Fi','fa-tv|Smart TV','fa-snowflake|AC','fa-phone|Phone','fa-baby|Crib Available','fa-gamepad|Game Corner']
+};
+
+document.addEventListener('DOMContentLoaded', loadRoom);
+
+async function loadRoom() {
+    try {
+        const res = await api(`/api/rooms/${roomId}`);
+        if (res?.ok) {
+            room = await res.json();
+            renderRoom();
+            document.getElementById('roomContent').style.display = '';
+            document.getElementById('loadingRoom').style.display = 'none';
+            loadRoomReservations();
+        } else {
+            showToast('Room not found', 'error');
+            document.getElementById('loadingRoom').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h5>Room Not Found</h5></div>';
+        }
+    } catch (ex) {
+        document.getElementById('loadingRoom').innerHTML = '<div class="text-danger text-center py-4">Failed to load room</div>';
+    }
+}
+
+function renderRoom() {
+    const icons = { STANDARD:'bed', DELUXE:'gem', SUITE:'crown', PRESIDENTIAL:'star', FAMILY:'users' };
+    const t = room.roomType || room.type || 'STANDARD';
+    const rate = room.pricePerNight || room.ratePerNight || 0;
+
+    document.getElementById('heroIcon').className = `fas fa-${icons[t]||'bed'}`;
+    document.getElementById('heroIcon').style.fontSize = '4rem';
+    document.getElementById('heroPrice').textContent = formatCurrency(rate) + ' / night';
+    document.getElementById('roomTitle').textContent = `Room ${room.roomNumber || room.id}`;
+    document.getElementById('roomStatus').className = `badge-status ${room.available !== false ? 'badge-confirmed' : 'badge-cancelled'}`;
+    document.getElementById('roomStatus').textContent = room.available !== false ? 'AVAILABLE' : 'OCCUPIED';
+    document.getElementById('roomTypeBadge').innerHTML = roomTypeBadge(t);
+    document.getElementById('roomDesc').textContent = room.description || 'Experience comfort and luxury in this beautifully furnished room with stunning ocean views.';
+    document.getElementById('roomCapacity').textContent = room.maxOccupancy || room.capacity || 2;
+    document.getElementById('roomRate').textContent = formatCurrency(rate);
+    document.getElementById('roomFloor').textContent = room.floor || (room.roomNumber ? room.roomNumber.charAt(0) : '—');
+    document.getElementById('priceStandard').textContent = formatCurrency(rate);
+    document.getElementById('priceWeekly').textContent = formatCurrency(rate * 7 * 0.95);
+
+    // Amenities
+    const amenities = amenityMap[t] || amenityMap['STANDARD'];
+    document.getElementById('amenitiesList').innerHTML = amenities.map(a => {
+        const [icon, name] = a.split('|');
+        return `<div class="col-6 col-md-4"><div class="d-flex align-items-center p-2 rounded-3" style="background:var(--ov-primary-light)"><i class="fas ${icon} text-ocean me-2"></i><small>${name}</small></div></div>`;
+    }).join('');
+
+    updateUserUI();
+}
+
+async function loadRoomReservations() {
+    try {
+        const res = await api(`/api/reservations`);
+        if (res?.ok) {
+            let all = await res.json();
+            if (Array.isArray(all)) {
+                const roomRes = all.filter(r => r.roomId == roomId || (r.room && r.room.id == roomId)).slice(0, 5);
+                const tbody = document.getElementById('roomReservations');
+                if (roomRes.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No reservations for this room</td></tr>';
+                } else {
+                    tbody.innerHTML = roomRes.map(r => `
+                        <tr>
+                            <td><a href="${CTX}/reservations/view/${r.id}" class="text-ocean fw-semibold">${r.reservationNumber || r.id}</a></td>
+                            <td>${r.guestName || r.customerName || '—'}</td>
+                            <td>${formatDate(r.checkInDate)}</td>
+                            <td>${formatDate(r.checkOutDate)}</td>
+                            <td>${statusBadge(r.status)}</td>
+                        </tr>`).join('');
+                }
+            }
+        }
+    } catch (ex) {
+        document.getElementById('roomReservations').innerHTML = '<tr><td colspan="5" class="text-center text-muted">Failed to load</td></tr>';
+    }
+}
+
+function editRoom() {
+    document.getElementById('editRoomNumber').value = room.roomNumber || '';
+    document.getElementById('editRoomType').value = room.roomType || room.type || 'STANDARD';
+    document.getElementById('editRoomRate').value = room.pricePerNight || room.ratePerNight || 0;
+    document.getElementById('editRoomCapacity').value = room.maxOccupancy || room.capacity || 2;
+    document.getElementById('editRoomDescField').value = room.description || '';
+    new bootstrap.Modal(document.getElementById('editRoomModal')).show();
+}
+
+async function saveRoom(e) {
+    e.preventDefault();
+    const updated = {
+        ...room,
+        roomNumber: document.getElementById('editRoomNumber').value,
+        roomType: document.getElementById('editRoomType').value,
+        type: document.getElementById('editRoomType').value,
+        pricePerNight: parseFloat(document.getElementById('editRoomRate').value),
+        ratePerNight: parseFloat(document.getElementById('editRoomRate').value),
+        maxOccupancy: parseInt(document.getElementById('editRoomCapacity').value),
+        capacity: parseInt(document.getElementById('editRoomCapacity').value),
+        description: document.getElementById('editRoomDescField').value
+    };
+    const res = await api(`/api/rooms/${roomId}`, { method: 'PUT', body: updated });
+    if (res?.ok) {
+        room = await res.json();
+        renderRoom();
+        bootstrap.Modal.getInstance(document.getElementById('editRoomModal')).hide();
+        showToast('Room updated!', 'success');
+    } else {
+        showToast('Failed to update room', 'error');
+    }
+}
+
+async function toggleAvailability() {
+    const res = await api(`/api/rooms/${roomId}/toggle-availability`, { method: 'PUT' });
+    if (res?.ok) { showToast('Availability toggled', 'success'); loadRoom(); }
+    else showToast('Failed to toggle', 'error');
+}
+
+async function deleteRoomDetail() {
+    if (!await confirmAction('Delete this room permanently?')) return;
+    const res = await api(`/api/rooms/${roomId}`, { method: 'DELETE' });
+    if (res?.ok) { showToast('Room deleted', 'success'); window.location.href = CTX + '/rooms'; }
+    else showToast('Failed to delete', 'error');
+}
+</script>
+
+</body>
+</html>

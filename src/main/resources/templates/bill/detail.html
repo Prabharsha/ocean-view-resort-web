@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Bill Details')}">
+    <title>Bill Details – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Bill Details')}"></header>
+
+    <div class="ov-content">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 animate-in">
+            <a th:href="@{/bills}" class="btn btn-outline-ocean">
+                <i class="fas fa-arrow-left me-2"></i>Back to Bills
+            </a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-ocean" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>Print
+                </button>
+                <button class="btn btn-ocean" id="payBtn" style="display:none" onclick="showPaymentModal()">
+                    <i class="fas fa-credit-card me-2"></i>Record Payment
+                </button>
+            </div>
+        </div>
+
+        <div id="billContent" style="display:none">
+            <div class="row g-4">
+                <!-- Main Bill -->
+                <div class="col-lg-8 animate-in delay-1">
+                    <div class="ov-card bill-layout" id="printArea">
+                        <div class="card-body-ov">
+                            <!-- Hotel Header -->
+                            <div class="bill-header text-center mb-4 pb-3" style="border-bottom:2px solid var(--ov-primary)">
+                                <h3 class="fw-bold text-ocean mb-1"><i class="fas fa-water me-2"></i>Ocean View Resort</h3>
+                                <p class="text-muted mb-0">Marine Drive, Cardiff CF10 5BW</p>
+                                <p class="text-muted mb-0">Tel: +44 29 2034 5678 &nbsp;|&nbsp; reservations@oceanviewresort.com</p>
+                            </div>
+
+                            <!-- Bill Info Row -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold text-muted mb-2">BILL TO</h6>
+                                    <h5 class="fw-bold" id="billGuest">—</h5>
+                                    <p class="text-muted mb-0" id="billGuestEmail">—</p>
+                                    <p class="text-muted mb-0" id="billGuestPhone">—</p>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <div class="mb-2">
+                                        <h6 class="fw-bold text-muted mb-1">INVOICE</h6>
+                                        <h5 class="fw-bold text-ocean" id="billNumber">—</h5>
+                                    </div>
+                                    <div class="mb-1"><small class="text-muted">Date: </small><strong id="billDate">—</strong></div>
+                                    <div><span class="badge-status" id="billStatus">—</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Reservation Details -->
+                            <div class="p-3 rounded-3 mb-4" style="background:var(--ov-primary-light)">
+                                <div class="row g-2">
+                                    <div class="col-sm-3">
+                                        <small class="text-muted d-block">Reservation #</small>
+                                        <strong id="billResNum">—</strong>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <small class="text-muted d-block">Room</small>
+                                        <strong id="billRoom">—</strong>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <small class="text-muted d-block">Check-in</small>
+                                        <strong id="billCheckin">—</strong>
+                                    </div>
+                                    <div class="col-sm-3">
+                                        <small class="text-muted d-block">Check-out</small>
+                                        <strong id="billCheckout">—</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charges Breakdown -->
+                            <h6 class="fw-bold mb-3">Charges Breakdown</h6>
+                            <table class="ov-table" style="min-width:auto">
+                                <thead>
+                                    <tr>
+                                        <th>Description</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Rate</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="chargesBody">
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-semibold">Subtotal</td>
+                                        <td class="text-end fw-semibold" id="subTotal">—</td>
+                                    </tr>
+                                    <tr id="discountRow" style="display:none">
+                                        <td colspan="3" class="text-end text-success">Discount</td>
+                                        <td class="text-end text-success" id="discountAmt">—</td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-end">Tax (15%)</td>
+                                        <td class="text-end" id="taxAmount">—</td>
+                                    </tr>
+                                    <tr style="background:var(--ov-primary-light)">
+                                        <td colspan="3" class="text-end fw-bold fs-5">Total</td>
+                                        <td class="text-end fw-bold fs-5 text-ocean" id="totalAmount">—</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+
+                            <!-- Thank you -->
+                            <div class="text-center mt-4 pt-3" style="border-top:1px solid #e5e7eb">
+                                <p class="text-muted mb-1"><i class="fas fa-heart text-danger me-1"></i> Thank you for staying with us!</p>
+                                <small class="text-muted">Please retain this invoice for your records</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Payment Summary -->
+                    <div class="ov-card mb-3 animate-in delay-2">
+                        <div class="card-body-ov">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-credit-card me-2 text-ocean"></i>Payment Summary</h6>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Total Due</span>
+                                <strong id="payTotal">—</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Paid</span>
+                                <strong class="text-success" id="payPaid">£0.00</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted">Balance</span>
+                                <strong class="text-danger" id="payBalance">—</strong>
+                            </div>
+                            <div class="progress" style="height:8px;border-radius:4px">
+                                <div class="progress-bar" id="payProgress" style="width:0%;background:var(--ov-primary)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment History -->
+                    <div class="ov-card mb-3 animate-in delay-2">
+                        <div class="card-body-ov">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-history me-2 text-ocean"></i>Payment History</h6>
+                            <div id="paymentHistory">
+                                <p class="text-muted text-center mb-0">No payments recorded</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Discount (Manager) -->
+                    <div class="ov-card animate-in delay-3" data-role="MANAGER">
+                        <div class="card-body-ov">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-percent me-2 text-ocean"></i>Apply Discount</h6>
+                            <form onsubmit="applyDiscount(event)">
+                                <div class="input-group mb-2">
+                                    <input type="number" class="form-control ov-input" id="discountPct" placeholder="Discount %" min="0" max="100" step="1"/>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <input type="text" class="form-control ov-input mb-2" id="discountReason" placeholder="Reason (optional)"/>
+                                <button type="submit" class="btn btn-ocean btn-sm w-100">Apply Discount</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loadingBill" class="text-center py-5">
+            <div class="spinner-border text-ocean" role="status"><span class="visually-hidden">Loading...</span></div>
+            <p class="text-muted mt-2">Loading bill details...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:var(--ov-radius)">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Record Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="recordPayment(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Amount (£)</label>
+                        <input type="number" class="form-control ov-input" id="payAmount" step="0.01" min="0.01" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Payment Method</label>
+                        <select class="form-select ov-input" id="payMethod" required>
+                            <option value="CREDIT_CARD">Credit Card</option>
+                            <option value="DEBIT_CARD">Debit Card</option>
+                            <option value="CASH">Cash</option>
+                            <option value="BANK_TRANSFER">Bank Transfer</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Reference</label>
+                        <input type="text" class="form-control ov-input" id="payRef" placeholder="Transaction reference"/>
+                    </div>
+                    <button type="submit" class="btn btn-ocean w-100">
+                        <i class="fas fa-check-circle me-2"></i>Confirm Payment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+let bill = null;
+const billId = window.location.pathname.replace(CTX, '').replace('/bills/', '');
+
+document.addEventListener('DOMContentLoaded', loadBill);
+
+async function loadBill() {
+    try {
+        const res = await api(`/api/bills/${billId}`);
+        if (res?.ok) {
+            bill = await res.json();
+            renderBill();
+            document.getElementById('billContent').style.display = '';
+            document.getElementById('loadingBill').style.display = 'none';
+        } else {
+            document.getElementById('loadingBill').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h5>Bill Not Found</h5></div>';
+        }
+    } catch (ex) {
+        document.getElementById('loadingBill').innerHTML = '<div class="text-danger text-center py-4">Failed to load bill</div>';
+    }
+}
+
+function renderBill() {
+    // Guest info
+    document.getElementById('billGuest').textContent = bill.guestName || bill.customerName || 'Guest';
+    document.getElementById('billGuestEmail').textContent = bill.guestEmail || bill.email || '';
+    document.getElementById('billGuestPhone').textContent = bill.guestPhone || bill.phone || '';
+
+    // Bill meta
+    document.getElementById('billNumber').textContent = bill.billNumber || `INV-${bill.id}`;
+    document.getElementById('billDate').textContent = formatDate(bill.billDate || bill.createdAt);
+
+    const status = bill.paymentStatus || bill.status || 'PENDING';
+    const el = document.getElementById('billStatus');
+    el.textContent = status;
+    el.className = 'badge-status ' + (status === 'PAID' ? 'badge-confirmed' : status === 'CANCELLED' ? 'badge-cancelled' : 'badge-pending');
+
+    // Show pay button if not paid
+    if (status !== 'PAID' && status !== 'CANCELLED') {
+        document.getElementById('payBtn').style.display = '';
+    }
+
+    // Reservation
+    document.getElementById('billResNum').textContent = bill.reservationNumber || '—';
+    document.getElementById('billRoom').textContent = bill.roomNumber ? `Room ${bill.roomNumber}` : '—';
+    document.getElementById('billCheckin').textContent = formatDate(bill.checkInDate);
+    document.getElementById('billCheckout').textContent = formatDate(bill.checkOutDate);
+
+    // Charges
+    const rate = bill.roomRate || bill.ratePerNight || 0;
+    const nights = bill.numberOfNights || bill.nights || 1;
+    const tbody = document.getElementById('chargesBody');
+    tbody.innerHTML = `
+        <tr>
+            <td>Room Accommodation (${bill.roomType || 'Standard'})</td>
+            <td class="text-end">${nights} night(s)</td>
+            <td class="text-end">${formatCurrency(rate)}</td>
+            <td class="text-end">${formatCurrency(rate * nights)}</td>
+        </tr>`;
+
+    // Additional charges
+    if (bill.additionalCharges && bill.additionalCharges.length) {
+        bill.additionalCharges.forEach(c => {
+            tbody.innerHTML += `<tr><td>${c.description}</td><td class="text-end">1</td><td class="text-end">${formatCurrency(c.amount)}</td><td class="text-end">${formatCurrency(c.amount)}</td></tr>`;
+        });
+    }
+
+    // Totals
+    const sub = bill.subTotal || bill.amount || (rate * nights);
+    const disc = bill.discountAmount || bill.discount || 0;
+    const tax = bill.taxAmount || bill.tax || 0;
+    const total = bill.totalAmount || bill.total || 0;
+    document.getElementById('subTotal').textContent = formatCurrency(sub);
+    document.getElementById('taxAmount').textContent = formatCurrency(tax);
+    document.getElementById('totalAmount').textContent = formatCurrency(total);
+
+    if (disc > 0) {
+        document.getElementById('discountRow').style.display = '';
+        document.getElementById('discountAmt').textContent = '-' + formatCurrency(disc);
+    }
+
+    // Payment summary
+    const paid = bill.paidAmount || bill.amountPaid || 0;
+    const balance = total - paid;
+    document.getElementById('payTotal').textContent = formatCurrency(total);
+    document.getElementById('payPaid').textContent = formatCurrency(paid);
+    document.getElementById('payBalance').textContent = formatCurrency(Math.max(0, balance));
+    document.getElementById('payProgress').style.width = (total > 0 ? Math.min(100, (paid / total * 100)) : 0) + '%';
+    document.getElementById('payAmount').value = Math.max(0, balance).toFixed(2);
+
+    // Payment history
+    const payments = bill.payments || [];
+    const hist = document.getElementById('paymentHistory');
+    if (payments.length) {
+        hist.innerHTML = payments.map(p => `
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <div>
+                    <strong>${formatCurrency(p.amount)}</strong>
+                    <small class="text-muted d-block">${p.paymentMethod || p.method || 'Card'}</small>
+                </div>
+                <small class="text-muted">${formatDate(p.paymentDate || p.date)}</small>
+            </div>`).join('');
+    } else {
+        hist.innerHTML = '<p class="text-muted text-center mb-0">No payments recorded</p>';
+    }
+
+    updateUserUI();
+}
+
+function showPaymentModal() {
+    new bootstrap.Modal(document.getElementById('paymentModal')).show();
+}
+
+async function recordPayment(e) {
+    e.preventDefault();
+    try {
+        const res = await api(`/api/bills/${billId}/payments`, {
+            method: 'POST',
+            body: {
+                amount: parseFloat(document.getElementById('payAmount').value),
+                paymentMethod: document.getElementById('payMethod').value,
+                transactionReference: document.getElementById('payRef').value
+            }
+        });
+        if (res?.ok) {
+            showToast('Payment recorded!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            loadBill();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(err.message || 'Failed to record payment', 'error');
+        }
+    } catch (ex) { showToast('Network error', 'error'); }
+}
+
+async function applyDiscount(e) {
+    e.preventDefault();
+    const pct = document.getElementById('discountPct').value;
+    const reason = document.getElementById('discountReason').value;
+    if (!pct || pct <= 0) { showToast('Enter a valid discount', 'error'); return; }
+    try {
+        const res = await api(`/api/bills/${billId}/discount`, {
+            method: 'POST',
+            body: { percentage: parseFloat(pct), reason: reason }
+        });
+        if (res?.ok) { showToast('Discount applied!', 'success'); loadBill(); }
+        else showToast('Failed to apply discount', 'error');
+    } catch (ex) { showToast('Network error', 'error'); }
+}
+</script>
+
+</body>
+</html>

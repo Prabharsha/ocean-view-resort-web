@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Help & FAQ')}">
+    <title>Help – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Help & FAQ')}"></header>
+
+    <div class="ov-content">
+        <div class="animate-in">
+            <h4 class="fw-bold mb-1">Help Center</h4>
+            <p class="text-muted mb-4">Find answers to common questions and learn how to use the system</p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Quick Start -->
+            <div class="col-lg-8">
+                <div class="ov-card mb-4 animate-in delay-1">
+                    <div class="card-body-ov">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-rocket me-2 text-ocean"></i>Quick Start Guide</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:var(--ov-primary-light)">
+                                    <h6 class="fw-bold"><i class="fas fa-calendar-plus me-2 text-ocean"></i>Making a Reservation</h6>
+                                    <ol class="mb-0 ps-3" style="font-size:.9rem">
+                                        <li>Go to <strong>Reservations → New Booking</strong></li>
+                                        <li>Enter guest details and dates</li>
+                                        <li>Select available room</li>
+                                        <li>Review and confirm booking</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:#f0fdf4">
+                                    <h6 class="fw-bold"><i class="fas fa-sign-in-alt me-2" style="color:#16a34a"></i>Check-in Process</h6>
+                                    <ol class="mb-0 ps-3" style="font-size:.9rem">
+                                        <li>Find reservation in list</li>
+                                        <li>Click <strong>Check In</strong> button</li>
+                                        <li>Verify guest identity</li>
+                                        <li>Room key is issued</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:#fef3c7">
+                                    <h6 class="fw-bold"><i class="fas fa-file-invoice-dollar me-2" style="color:#d97706"></i>Generating Bills</h6>
+                                    <ol class="mb-0 ps-3" style="font-size:.9rem">
+                                        <li>Go to reservation details</li>
+                                        <li>Click <strong>Generate Bill</strong></li>
+                                        <li>Review charges</li>
+                                        <li>Record payment</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:#fdf2f8">
+                                    <h6 class="fw-bold"><i class="fas fa-sign-out-alt me-2" style="color:#db2777"></i>Check-out Process</h6>
+                                    <ol class="mb-0 ps-3" style="font-size:.9rem">
+                                        <li>Ensure bill is settled</li>
+                                        <li>Click <strong>Check Out</strong></li>
+                                        <li>Print final invoice</li>
+                                        <li>Room becomes available</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Accordion -->
+                <div class="ov-card animate-in delay-2">
+                    <div class="card-body-ov">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-question-circle me-2 text-ocean"></i>Frequently Asked Questions</h5>
+                        <div class="accordion" id="faqAccordion">
+                            <div class="ov-accordion-item">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How do I create a new reservation?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Navigate to <strong>Reservations → New Booking</strong> from the sidebar. Fill in the guest's details, select the check-in and check-out dates, choose an available room, and click <strong>Confirm Booking</strong>. You'll receive a reservation number upon successful creation.
+                                </div>
+                            </div>
+                            <div class="ov-accordion-item">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How do I check in a guest?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Go to <strong>Reservations</strong>, find the reservation, and click the <strong>Check In</strong> button. The reservation status will change to "CHECKED_IN" and the room will be marked as occupied.
+                                </div>
+                            </div>
+                            <div class="ov-accordion-item">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>Can I modify a reservation after it's created?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Yes! You can modify reservations that are in "CONFIRMED" status. Go to the reservation detail page and click <strong>Edit</strong>. You can change dates, room assignment, and guest details. Note: already checked-in reservations require manager approval to modify.
+                                </div>
+                            </div>
+                            <div class="ov-accordion-item">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How do I generate and print a bill?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Bills are generated automatically when a reservation is checked out, or you can create one manually from the reservation detail page. To print, go to <strong>Bills → View Bill → Print</strong>. The print-friendly version opens in a new window.
+                                </div>
+                            </div>
+                            <div class="ov-accordion-item">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How do I apply a discount to a bill?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Managers can apply discounts from the bill detail page. Enter the discount percentage and reason in the <strong>Apply Discount</strong> section. The bill total will be automatically recalculated.
+                                </div>
+                            </div>
+                            <div class="ov-accordion-item">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>What reports are available?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    The system provides <strong>Monthly Reports</strong> (revenue, occupancy, booking trends), <strong>Weekly Reports</strong> (short-term performance), and a <strong>Reports Dashboard</strong> with KPIs, charts, and analytics. All reports can be printed.
+                                </div>
+                            </div>
+                            <div class="ov-accordion-item">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>What are the different user roles?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    <ul class="mb-0">
+                                        <li><strong>Customer</strong> – Can view/manage their own reservations and bills</li>
+                                        <li><strong>Staff</strong> – Can manage all reservations, check-in/out, and generate bills</li>
+                                        <li><strong>Manager</strong> – Full access: room management, reports, discounts, user management</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Keyboard Shortcuts -->
+                <div class="ov-card mb-4 animate-in delay-1">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-keyboard me-2 text-ocean"></i>Keyboard Shortcuts</h6>
+                        <div class="d-flex justify-content-between py-2 border-bottom">
+                            <span>Go to Dashboard</span>
+                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Alt + D</kbd>
+                        </div>
+                        <div class="d-flex justify-content-between py-2 border-bottom">
+                            <span>New Reservation</span>
+                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Alt + N</kbd>
+                        </div>
+                        <div class="d-flex justify-content-between py-2 border-bottom">
+                            <span>Search</span>
+                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Ctrl + K</kbd>
+                        </div>
+                        <div class="d-flex justify-content-between py-2">
+                            <span>Toggle Sidebar</span>
+                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Alt + S</kbd>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div class="ov-card mb-4 animate-in delay-2">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-headset me-2 text-ocean"></i>Need More Help?</h6>
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-envelope text-ocean me-2"></i>
+                                <span>support@oceanviewresort.com</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-phone text-ocean me-2"></i>
+                                <span>+44 29 2034 5678</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock text-ocean me-2"></i>
+                                <span>Mon–Fri, 9:00 AM – 6:00 PM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Info -->
+                <div class="ov-card animate-in delay-2">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-ocean"></i>System Info</h6>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Version</span><strong>1.0.0</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Framework</span><strong>Spring Boot 3.2</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Java</span><strong>17+</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1">
+                            <span class="text-muted">Database</span><strong>MySQL 8</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+function toggleFaq(btn) {
+    const item = btn.parentElement;
+    const body = item.querySelector('.ov-accordion-body');
+    const icon = btn.querySelector('i');
+    const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
+
+    // Close all
+    document.querySelectorAll('.ov-accordion-body').forEach(b => { b.style.maxHeight = '0px'; b.style.padding = '0 16px'; });
+    document.querySelectorAll('.ov-accordion-btn i').forEach(i => i.style.transform = '');
+
+    if (!isOpen) {
+        body.style.maxHeight = body.scrollHeight + 20 + 'px';
+        body.style.padding = '12px 16px';
+        icon.style.transform = 'rotate(180deg)';
+    }
+}
+
+// Style accordion
+document.querySelectorAll('.ov-accordion-item').forEach(item => {
+    const btn = item.querySelector('.ov-accordion-btn');
+    btn.style.cssText = 'width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:none;background:#f8fafc;border-radius:8px;cursor:pointer;font-weight:600;font-size:.95rem;transition:.2s;margin-bottom:4px';
+    btn.onmouseenter = () => btn.style.background = '#e0f2fe';
+    btn.onmouseleave = () => btn.style.background = '#f8fafc';
+
+    const body = item.querySelector('.ov-accordion-body');
+    body.style.cssText = 'max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;padding:0 16px;font-size:.9rem;line-height:1.7;color:#475569';
+});
+</script>
+
+</body>
+</html>

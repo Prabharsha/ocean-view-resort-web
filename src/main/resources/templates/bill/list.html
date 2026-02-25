@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Bills')}">
+    <title>Bills – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Billing & Payments')}"></header>
+
+    <div class="ov-content">
+        <!-- Header -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2 animate-in">
+            <div>
+                <h4 class="fw-bold mb-1">Billing &amp; Payments</h4>
+                <p class="text-muted mb-0">Manage invoices and track payments</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row g-3 mb-4 animate-in delay-1">
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card blue">
+                    <div class="stat-label">Total Bills</div>
+                    <div class="stat-value" id="totalBills">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card green">
+                    <div class="stat-label">Paid</div>
+                    <div class="stat-value" id="paidBills">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card danger">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value" id="pendingBills">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card gold">
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value" id="totalRevenue">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="ov-card mb-4 animate-in delay-1">
+            <div class="card-body-ov">
+                <div class="filter-bar mb-0">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control ov-input" id="billSearch"
+                               placeholder="Search by bill number or guest..." oninput="filterBills()"/>
+                    </div>
+                    <select class="form-select ov-input" style="width:auto" id="paymentStatusFilter" onchange="filterBills()">
+                        <option value="">All Statuses</option>
+                        <option value="PAID">Paid</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="PARTIAL">Partial</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bills Table -->
+        <div class="ov-card animate-in delay-2">
+            <div class="card-body-ov p-0">
+                <div class="table-responsive">
+                    <table class="ov-table">
+                        <thead>
+                            <tr>
+                                <th>Bill #</th>
+                                <th>Reservation</th>
+                                <th>Guest</th>
+                                <th>Amount</th>
+                                <th>Tax</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="billsTableBody">
+                            <tr><td colspan="9" class="text-center text-muted py-4"><div class="spinner-border spinner-border-sm text-ocean me-2"></div>Loading bills...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3" id="paginationContainer"></div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+let bills = [];
+let currentPage = 0;
+const PAGE_SIZE = 10;
+
+document.addEventListener('DOMContentLoaded', loadBills);
+
+async function loadBills() {
+    try {
+        const res = await api('/api/bills');
+        if (res?.ok) {
+            bills = await res.json();
+            if (!Array.isArray(bills)) bills = [];
+            updateBillStats();
+            filterBills();
+        }
+    } catch (ex) {
+        document.getElementById('billsTableBody').innerHTML = '<tr><td colspan="9" class="text-center text-danger py-4">Failed to load bills</td></tr>';
+    }
+}
+
+function updateBillStats() {
+    const paid = bills.filter(b => (b.paymentStatus || b.status) === 'PAID');
+    const pending = bills.filter(b => (b.paymentStatus || b.status) === 'PENDING');
+    const total = bills.reduce((s, b) => s + (b.totalAmount || b.total || 0), 0);
+    document.getElementById('totalBills').textContent = bills.length;
+    document.getElementById('paidBills').textContent = paid.length;
+    document.getElementById('pendingBills').textContent = pending.length;
+    document.getElementById('totalRevenue').textContent = formatCurrency(total);
+}
+
+function filterBills() {
+    const search = document.getElementById('billSearch').value.toLowerCase();
+    const status = document.getElementById('paymentStatusFilter').value;
+
+    let filtered = bills.filter(b => {
+        const matchSearch = !search ||
+            (b.billNumber || '').toLowerCase().includes(search) ||
+            (b.guestName || b.customerName || '').toLowerCase().includes(search);
+        const matchStatus = !status || (b.paymentStatus || b.status) === status;
+        return matchSearch && matchStatus;
+    });
+
+    currentPage = 0;
+    renderBillsPage(filtered);
+}
+
+function renderBillsPage(list) {
+    const tbody = document.getElementById('billsTableBody');
+    if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="fas fa-file-invoice-dollar"></i><h5>No Bills Found</h5></div></td></tr>';
+        document.getElementById('paginationContainer').innerHTML = '';
+        return;
+    }
+    const start = currentPage * PAGE_SIZE;
+    const page = list.slice(start, start + PAGE_SIZE);
+
+    tbody.innerHTML = page.map(b => {
+        const status = b.paymentStatus || b.status || 'PENDING';
+        const statusClass = status === 'PAID' ? 'badge-confirmed' : status === 'CANCELLED' ? 'badge-cancelled' : 'badge-pending';
+        return `
+            <tr>
+                <td><a href="${CTX}/bills/${b.id}" class="text-ocean fw-semibold">${b.billNumber || b.id}</a></td>
+                <td>${b.reservationNumber || '—'}</td>
+                <td>${b.guestName || b.customerName || '—'}</td>
+                <td>${formatCurrency(b.subTotal || b.amount || 0)}</td>
+                <td>${formatCurrency(b.taxAmount || b.tax || 0)}</td>
+                <td class="fw-bold">${formatCurrency(b.totalAmount || b.total || 0)}</td>
+                <td><span class="badge-status ${statusClass}">${status}</span></td>
+                <td>${formatDate(b.billDate || b.createdAt)}</td>
+                <td>
+                    <a href="${CTX}/bills/${b.id}" class="btn btn-sm btn-outline-ocean me-1" title="View"><i class="fas fa-eye"></i></a>
+                </td>
+            </tr>`;
+    }).join('');
+
+    buildPagination(list.length, PAGE_SIZE, currentPage, 'paginationContainer', p => { currentPage = p; renderBillsPage(list); });
+}
+</script>
+
+</body>
+</html>

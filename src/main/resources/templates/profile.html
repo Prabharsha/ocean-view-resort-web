@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('My Profile')}">
+    <title>Profile – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('My Profile')}"></header>
+
+    <div class="ov-content">
+        <div class="row g-4">
+            <!-- Profile Card -->
+            <div class="col-lg-4 animate-in">
+                <div class="ov-card text-center">
+                    <div class="card-body-ov">
+                        <div class="mb-3" style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--ov-primary),var(--ov-secondary));display:inline-flex;align-items:center;justify-content:center">
+                            <i class="fas fa-user" style="font-size:2.5rem;color:#fff"></i>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="profileName">—</h4>
+                        <p class="text-muted mb-2" id="profileEmail">—</p>
+                        <span class="badge rounded-pill" id="profileRole" style="background:var(--ov-primary);color:#fff;padding:6px 16px">—</span>
+
+                        <hr class="my-3"/>
+
+                        <div class="row g-2 text-center">
+                            <div class="col-6">
+                                <div class="p-2 rounded-3" style="background:var(--ov-primary-light)">
+                                    <small class="text-muted d-block" style="font-size:.7rem">Member Since</small>
+                                    <strong id="profileSince" style="font-size:.85rem">—</strong>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 rounded-3" style="background:#f0fdf4">
+                                    <small class="text-muted d-block" style="font-size:.7rem">Status</small>
+                                    <strong style="font-size:.85rem;color:#16a34a">Active</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <!-- Personal Info -->
+                <div class="ov-card mb-4 animate-in delay-1">
+                    <div class="card-body-ov">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-user-edit me-2 text-ocean"></i>Personal Information</h5>
+                        <form id="profileForm" onsubmit="updateProfile(event)">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">First Name</label>
+                                    <input type="text" class="form-control ov-input" id="profFirstName"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Last Name</label>
+                                    <input type="text" class="form-control ov-input" id="profLastName"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Email</label>
+                                    <input type="email" class="form-control ov-input" id="profEmail"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Phone</label>
+                                    <input type="tel" class="form-control ov-input" id="profPhone"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Username</label>
+                                    <input type="text" class="form-control ov-input" id="profUsername" readonly style="background:#f8fafc"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Role</label>
+                                    <input type="text" class="form-control ov-input" id="profRole" readonly style="background:#f8fafc"/>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-ocean mt-3">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Change Password -->
+                <div class="ov-card animate-in delay-2">
+                    <div class="card-body-ov">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-lock me-2 text-ocean"></i>Change Password</h5>
+                        <form id="passwordForm" onsubmit="changePassword(event)">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">Current Password</label>
+                                    <input type="password" class="form-control ov-input" id="currentPwd" required/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">New Password</label>
+                                    <input type="password" class="form-control ov-input" id="newPwd" required minlength="6"/>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Confirm New Password</label>
+                                    <input type="password" class="form-control ov-input" id="confirmPwd" required minlength="6"/>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center mt-3">
+                                <button type="submit" class="btn btn-outline-ocean">
+                                    <i class="fas fa-key me-2"></i>Update Password
+                                </button>
+                                <small class="text-muted ms-3">Min. 6 characters</small>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', loadProfile);
+
+function loadProfile() {
+    const user = OVAuth.getUser();
+    if (!user) { window.location.href = CTX + '/login'; return; }
+
+    document.getElementById('profileName').textContent = (user.firstName || '') + ' ' + (user.lastName || user.username || '');
+    document.getElementById('profileEmail').textContent = user.email || user.username || '';
+    document.getElementById('profileRole').textContent = user.role || 'USER';
+    document.getElementById('profileSince').textContent = user.createdAt ? formatDate(user.createdAt) : 'N/A';
+
+    document.getElementById('profFirstName').value = user.firstName || '';
+    document.getElementById('profLastName').value = user.lastName || '';
+    document.getElementById('profEmail').value = user.email || '';
+    document.getElementById('profPhone').value = user.phone || '';
+    document.getElementById('profUsername').value = user.username || '';
+    document.getElementById('profRole').value = user.role || '';
+}
+
+async function updateProfile(e) {
+    e.preventDefault();
+    try {
+        const res = await api('/api/auth/profile', {
+            method: 'PUT',
+            body: {
+                firstName: document.getElementById('profFirstName').value,
+                lastName: document.getElementById('profLastName').value,
+                email: document.getElementById('profEmail').value,
+                phone: document.getElementById('profPhone').value
+            }
+        });
+        if (res?.ok) {
+            const updated = await res.json();
+            OVAuth.setUser(updated);
+            loadProfile();
+            showToast('Profile updated!', 'success');
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(err.message || 'Failed to update profile', 'error');
+        }
+    } catch (ex) { showToast('Network error', 'error'); }
+}
+
+async function changePassword(e) {
+    e.preventDefault();
+    const newPwd = document.getElementById('newPwd').value;
+    const confirmPwd = document.getElementById('confirmPwd').value;
+
+    if (newPwd !== confirmPwd) {
+        showToast('Passwords do not match', 'error');
+        return;
+    }
+
+    try {
+        const res = await api('/api/auth/change-password', {
+            method: 'POST',
+            body: {
+                currentPassword: document.getElementById('currentPwd').value,
+                newPassword: newPwd,
+                confirmPassword: confirmPwd
+            }
+        });
+        if (res?.ok) {
+            showToast('Password changed successfully!', 'success');
+            document.getElementById('passwordForm').reset();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(err.message || 'Failed to change password', 'error');
+        }
+    } catch (ex) { showToast('Network error', 'error'); }
+}
+</script>
+
+</body>
+</html>

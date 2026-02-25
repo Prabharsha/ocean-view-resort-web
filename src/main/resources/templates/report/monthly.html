@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Monthly Report')}">
+    <title>Monthly Report – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Monthly Report')}"></header>
+
+    <div class="ov-content">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2 animate-in">
+            <div>
+                <a th:href="@{/reports}" class="btn btn-outline-ocean btn-sm mb-2"><i class="fas fa-arrow-left me-1"></i>Back</a>
+                <h4 class="fw-bold mb-1">Monthly Report</h4>
+                <p class="text-muted mb-0">Detailed monthly performance analysis</p>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <select class="form-select ov-input" style="width:auto" id="monthSelect" onchange="loadMonthlyReport()">
+                </select>
+                <button class="btn btn-outline-ocean" onclick="window.print()">
+                    <i class="fas fa-print me-1"></i>Print
+                </button>
+            </div>
+        </div>
+
+        <!-- Monthly KPIs -->
+        <div class="row g-3 mb-4 animate-in delay-1">
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card blue">
+                    <div class="stat-label">Reservations</div>
+                    <div class="stat-value" id="mReservations">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card green">
+                    <div class="stat-label">Revenue</div>
+                    <div class="stat-value" id="mRevenue">—</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card gold">
+                    <div class="stat-label">Avg. Stay</div>
+                    <div class="stat-value" id="mAvgStay">—</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card danger">
+                    <div class="stat-label">Cancellations</div>
+                    <div class="stat-value" id="mCancelled">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Daily Revenue -->
+            <div class="col-lg-8 animate-in delay-2">
+                <div class="ov-card">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-chart-area me-2 text-ocean"></i>Daily Revenue</h6>
+                        <div class="chart-container"><canvas id="dailyRevChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check-in/out -->
+            <div class="col-lg-4 animate-in delay-2">
+                <div class="ov-card">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-exchange-alt me-2 text-ocean"></i>Check-in / Check-out</h6>
+                        <div class="chart-container"><canvas id="checkChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reservations Table -->
+            <div class="col-12 animate-in delay-3">
+                <div class="ov-card">
+                    <div class="card-body-ov p-0">
+                        <div class="p-3 pb-0"><h6 class="fw-bold"><i class="fas fa-list me-2 text-ocean"></i>Monthly Reservations</h6></div>
+                        <div class="table-responsive">
+                            <table class="ov-table">
+                                <thead>
+                                    <tr><th>Res #</th><th>Guest</th><th>Room</th><th>Check-in</th><th>Check-out</th><th>Status</th><th>Amount</th></tr>
+                                </thead>
+                                <tbody id="mTableBody">
+                                    <tr><td colspan="7" class="text-center text-muted py-3">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+let allReservations = [], allBills = [];
+let dRevChart, chkChart;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    populateMonthSelect();
+    const [resRes, billRes] = await Promise.all([api('/api/reservations'), api('/api/bills')]);
+    if (resRes?.ok) allReservations = await resRes.json();
+    if (billRes?.ok) allBills = await billRes.json();
+    if (!Array.isArray(allReservations)) allReservations = [];
+    if (!Array.isArray(allBills)) allBills = [];
+    loadMonthlyReport();
+});
+
+function populateMonthSelect() {
+    const sel = document.getElementById('monthSelect');
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        const label = d.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+        sel.innerHTML += `<option value="${val}">${label}</option>`;
+    }
+}
+
+function loadMonthlyReport() {
+    const month = document.getElementById('monthSelect').value;
+    const filtered = allReservations.filter(r => {
+        const d = r.checkInDate || r.createdAt;
+        return d && d.startsWith(month);
+    });
+    const monthBills = allBills.filter(b => {
+        const d = b.billDate || b.createdAt;
+        return d && d.startsWith(month);
+    });
+
+    const revenue = monthBills.reduce((s, b) => s + (b.totalAmount || b.total || 0), 0);
+    const cancelled = filtered.filter(r => r.status === 'CANCELLED').length;
+    const avgStay = filtered.length ? (filtered.reduce((s, r) => {
+        if (r.checkInDate && r.checkOutDate) {
+            return s + (new Date(r.checkOutDate) - new Date(r.checkInDate)) / 86400000;
+        }
+        return s;
+    }, 0) / filtered.length).toFixed(1) : 0;
+
+    document.getElementById('mReservations').textContent = filtered.length;
+    document.getElementById('mRevenue').textContent = formatCurrency(revenue);
+    document.getElementById('mAvgStay').textContent = avgStay + ' nights';
+    document.getElementById('mCancelled').textContent = cancelled;
+
+    // Daily revenue chart
+    const [year, mon] = month.split('-').map(Number);
+    const daysInMonth = new Date(year, mon, 0).getDate();
+    const dailyRev = new Array(daysInMonth).fill(0);
+    monthBills.forEach(b => {
+        const d = new Date(b.billDate || b.createdAt);
+        const day = d.getDate() - 1;
+        if (day >= 0 && day < daysInMonth) dailyRev[day] += (b.totalAmount || b.total || 0);
+    });
+
+    if (dRevChart) dRevChart.destroy();
+    dRevChart = new Chart(document.getElementById('dailyRevChart'), {
+        type: 'line',
+        data: {
+            labels: Array.from({ length: daysInMonth }, (_, i) => i + 1),
+            datasets: [{
+                label: 'Revenue (£)', data: dailyRev,
+                borderColor: '#0077b6', backgroundColor: 'rgba(0,119,182,0.1)',
+                fill: true, tension: .4, pointRadius: 2
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '£' + v } } } }
+    });
+
+    // Check-in/out chart
+    const checkIn = filtered.filter(r => r.status === 'CHECKED_IN').length;
+    const checkOut = filtered.filter(r => r.status === 'CHECKED_OUT').length;
+    const confirmed = filtered.filter(r => r.status === 'CONFIRMED').length;
+
+    if (chkChart) chkChart.destroy();
+    chkChart = new Chart(document.getElementById('checkChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Checked In', 'Checked Out', 'Confirmed', 'Cancelled'],
+            datasets: [{ data: [checkIn, checkOut, confirmed, cancelled], backgroundColor: ['#16a34a', '#6c757d', '#0077b6', '#dc2626'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+    });
+
+    // Table
+    const tbody = document.getElementById('mTableBody');
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No reservations for this month</td></tr>';
+    } else {
+        tbody.innerHTML = filtered.map(r => `
+            <tr>
+                <td><a href="${CTX}/reservations/view/${r.id}" class="text-ocean fw-semibold">${r.reservationNumber || r.id}</a></td>
+                <td>${r.guestName || r.customerName || '—'}</td>
+                <td>${r.roomNumber ? 'Room ' + r.roomNumber : '—'}</td>
+                <td>${formatDate(r.checkInDate)}</td>
+                <td>${formatDate(r.checkOutDate)}</td>
+                <td>${statusBadge(r.status)}</td>
+                <td>${formatCurrency(r.totalAmount || r.total || 0)}</td>
+            </tr>`).join('');
+    }
+}
+</script>
+
+</body>
+</html>

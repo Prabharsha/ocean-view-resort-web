@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Weekly Report')}">
+    <title>Weekly Report – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Weekly Report')}"></header>
+
+    <div class="ov-content">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2 animate-in">
+            <div>
+                <a th:href="@{/reports}" class="btn btn-outline-ocean btn-sm mb-2"><i class="fas fa-arrow-left me-1"></i>Back</a>
+                <h4 class="fw-bold mb-1">Weekly Report</h4>
+                <p class="text-muted mb-0" id="weekRange">Current week performance</p>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-outline-ocean btn-sm" onclick="changeWeek(-1)"><i class="fas fa-chevron-left"></i></button>
+                <span class="fw-semibold" id="weekLabel">This Week</span>
+                <button class="btn btn-outline-ocean btn-sm" onclick="changeWeek(1)"><i class="fas fa-chevron-right"></i></button>
+                <button class="btn btn-outline-ocean btn-sm ms-2" onclick="window.print()"><i class="fas fa-print"></i></button>
+            </div>
+        </div>
+
+        <!-- Weekly KPIs -->
+        <div class="row g-3 mb-4 animate-in delay-1">
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card blue">
+                    <div class="stat-label">Bookings</div>
+                    <div class="stat-value" id="wBookings">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card green">
+                    <div class="stat-label">Revenue</div>
+                    <div class="stat-value" id="wRevenue">—</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card gold">
+                    <div class="stat-label">Check-ins</div>
+                    <div class="stat-value" id="wCheckins">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card danger">
+                    <div class="stat-label">Check-outs</div>
+                    <div class="stat-value" id="wCheckouts">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Daily Breakdown -->
+            <div class="col-lg-8 animate-in delay-2">
+                <div class="ov-card">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-ocean"></i>Daily Breakdown</h6>
+                        <div class="chart-container"><canvas id="wDayChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Summary -->
+            <div class="col-lg-4 animate-in delay-2">
+                <div class="ov-card">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-chart-pie me-2 text-ocean"></i>Status Summary</h6>
+                        <div class="chart-container"><canvas id="wStatusChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Reservations -->
+            <div class="col-12 animate-in delay-3">
+                <div class="ov-card">
+                    <div class="card-body-ov p-0">
+                        <div class="p-3 pb-0"><h6 class="fw-bold"><i class="fas fa-list me-2 text-ocean"></i>This Week's Reservations</h6></div>
+                        <div class="table-responsive">
+                            <table class="ov-table">
+                                <thead>
+                                    <tr><th>Res #</th><th>Guest</th><th>Room</th><th>Check-in</th><th>Check-out</th><th>Status</th></tr>
+                                </thead>
+                                <tbody id="wTableBody">
+                                    <tr><td colspan="6" class="text-center text-muted py-3">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+let allRes = [], allBi = [];
+let weekOffset = 0;
+let wDayChartObj, wStatusChartObj;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const [rr, br] = await Promise.all([api('/api/reservations'), api('/api/bills')]);
+    if (rr?.ok) allRes = await rr.json();
+    if (br?.ok) allBi = await br.json();
+    if (!Array.isArray(allRes)) allRes = [];
+    if (!Array.isArray(allBi)) allBi = [];
+    renderWeek();
+});
+
+function getWeekRange() {
+    const now = new Date();
+    const day = now.getDay();
+    const start = new Date(now);
+    start.setDate(now.getDate() - day + 1 + weekOffset * 7);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+}
+
+function changeWeek(dir) {
+    weekOffset += dir;
+    renderWeek();
+}
+
+function renderWeek() {
+    const { start, end } = getWeekRange();
+    const fmt = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    document.getElementById('weekRange').textContent = fmt(start) + ' – ' + fmt(end) + ', ' + start.getFullYear();
+    document.getElementById('weekLabel').textContent = weekOffset === 0 ? 'This Week' : (weekOffset === -1 ? 'Last Week' : fmt(start) + ' – ' + fmt(end));
+
+    const inRange = d => { const dt = new Date(d); return dt >= start && dt <= end; };
+    const filtered = allRes.filter(r => inRange(r.checkInDate || r.createdAt));
+    const weekBills = allBi.filter(b => inRange(b.billDate || b.createdAt));
+    const revenue = weekBills.reduce((s, b) => s + (b.totalAmount || b.total || 0), 0);
+
+    document.getElementById('wBookings').textContent = filtered.length;
+    document.getElementById('wRevenue').textContent = formatCurrency(revenue);
+    document.getElementById('wCheckins').textContent = filtered.filter(r => r.status === 'CHECKED_IN').length;
+    document.getElementById('wCheckouts').textContent = filtered.filter(r => r.status === 'CHECKED_OUT').length;
+
+    // Daily chart
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const bookingsPerDay = new Array(7).fill(0);
+    const revPerDay = new Array(7).fill(0);
+    filtered.forEach(r => {
+        const d = new Date(r.checkInDate || r.createdAt);
+        const idx = (d.getDay() + 6) % 7;
+        bookingsPerDay[idx]++;
+    });
+    weekBills.forEach(b => {
+        const d = new Date(b.billDate || b.createdAt);
+        const idx = (d.getDay() + 6) % 7;
+        revPerDay[idx] += (b.totalAmount || b.total || 0);
+    });
+
+    if (wDayChartObj) wDayChartObj.destroy();
+    wDayChartObj = new Chart(document.getElementById('wDayChart'), {
+        type: 'bar',
+        data: {
+            labels: days,
+            datasets: [
+                { label: 'Bookings', data: bookingsPerDay, backgroundColor: 'rgba(0,119,182,0.7)', borderRadius: 6, yAxisID: 'y' },
+                { label: 'Revenue (£)', data: revPerDay, type: 'line', borderColor: '#c9a227', backgroundColor: 'transparent', tension: .4, yAxisID: 'y1' }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, position: 'left', ticks: { stepSize: 1 } },
+                y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => '£' + v } }
+            }
+        }
+    });
+
+    // Status chart
+    const statuses = {};
+    filtered.forEach(r => { statuses[r.status || 'UNKNOWN'] = (statuses[r.status || 'UNKNOWN'] || 0) + 1; });
+    const clrs = { CONFIRMED: '#0077b6', CHECKED_IN: '#16a34a', CHECKED_OUT: '#6c757d', CANCELLED: '#dc2626', PENDING: '#d97706' };
+
+    if (wStatusChartObj) wStatusChartObj.destroy();
+    wStatusChartObj = new Chart(document.getElementById('wStatusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(statuses),
+            datasets: [{ data: Object.values(statuses), backgroundColor: Object.keys(statuses).map(s => clrs[s] || '#94a3b8') }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+    });
+
+    // Table
+    const tbody = document.getElementById('wTableBody');
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No reservations</td></tr>';
+    } else {
+        tbody.innerHTML = filtered.map(r => `
+            <tr>
+                <td><a href="${CTX}/reservations/view/${r.id}" class="text-ocean fw-semibold">${r.reservationNumber || r.id}</a></td>
+                <td>${r.guestName || r.customerName || '—'}</td>
+                <td>${r.roomNumber ? 'Room ' + r.roomNumber : '—'}</td>
+                <td>${formatDate(r.checkInDate)}</td>
+                <td>${formatDate(r.checkOutDate)}</td>
+                <td>${statusBadge(r.status)}</td>
+            </tr>`).join('');
+    }
+}
+</script>
+
+</body>
+</html>

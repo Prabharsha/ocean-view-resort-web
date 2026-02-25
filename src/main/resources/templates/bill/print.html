@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Bill – Ocean View Resort</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: #1e293b; padding: 40px; max-width: 800px; margin: auto; }
+        .print-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #0077b6; }
+        .brand { font-size: 24px; font-weight: 700; color: #0077b6; }
+        .brand-sub { font-size: 12px; color: #64748b; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 25px; }
+        .info-block h6 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 4px; }
+        .info-block p { margin: 2px 0; font-size: 14px; }
+        .inv-number { font-size: 20px; font-weight: 700; color: #0077b6; }
+        .res-bar { background: #f0f9ff; padding: 12px 16px; border-radius: 8px; display: flex; gap: 40px; margin-bottom: 25px; }
+        .res-bar div small { display: block; font-size: 11px; color: #64748b; } .res-bar div strong { font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f1f5f9; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; padding: 10px 12px; text-align: left; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+        .text-end { text-align: right; }
+        .total-row { background: #f0f9ff; font-size: 18px; font-weight: 700; }
+        .total-row td { color: #0077b6; border: none; padding: 14px 12px; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #94a3b8; }
+        @media print { body { padding: 0; } .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align:center;margin-bottom:20px">
+        <button onclick="window.print()" style="padding:10px 24px;background:#0077b6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">
+            <span style="margin-right:6px">🖨</span> Print Invoice
+        </button>
+        <button onclick="window.close()" style="padding:10px 24px;background:#e5e7eb;color:#333;border:none;border-radius:8px;cursor:pointer;font-weight:600;margin-left:8px">
+            Close
+        </button>
+    </div>
+
+    <div class="print-header">
+        <div class="brand">🌊 Ocean View Resort</div>
+        <div class="brand-sub">Marine Drive, Cardiff CF10 5BW &nbsp;|&nbsp; +44 29 2034 5678 &nbsp;|&nbsp; reservations@oceanviewresort.com</div>
+    </div>
+
+    <div class="info-row">
+        <div class="info-block">
+            <h6>Bill To</h6>
+            <p><strong id="pGuest">—</strong></p>
+            <p id="pEmail">—</p>
+            <p id="pPhone">—</p>
+        </div>
+        <div class="info-block" style="text-align:right">
+            <h6>Invoice</h6>
+            <p class="inv-number" id="pBillNum">—</p>
+            <p>Date: <strong id="pDate">—</strong></p>
+            <p>Status: <strong id="pStatus">—</strong></p>
+        </div>
+    </div>
+
+    <div class="res-bar">
+        <div><small>Reservation</small><strong id="pRes">—</strong></div>
+        <div><small>Room</small><strong id="pRoom">—</strong></div>
+        <div><small>Check-in</small><strong id="pIn">—</strong></div>
+        <div><small>Check-out</small><strong id="pOut">—</strong></div>
+    </div>
+
+    <table>
+        <thead><tr><th>Description</th><th class="text-end">Qty</th><th class="text-end">Rate</th><th class="text-end">Amount</th></tr></thead>
+        <tbody id="pCharges"></tbody>
+        <tfoot>
+            <tr><td colspan="3" class="text-end" style="font-weight:600">Subtotal</td><td class="text-end" style="font-weight:600" id="pSub">—</td></tr>
+            <tr id="pDiscRow" style="display:none"><td colspan="3" class="text-end" style="color:#16a34a">Discount</td><td class="text-end" style="color:#16a34a" id="pDisc">—</td></tr>
+            <tr><td colspan="3" class="text-end">Tax (15%)</td><td class="text-end" id="pTax">—</td></tr>
+            <tr class="total-row"><td colspan="3" class="text-end">Total Due</td><td class="text-end" id="pTotal">—</td></tr>
+        </tfoot>
+    </table>
+
+    <div class="footer">
+        <p>Thank you for staying with us! We hope you enjoyed your experience.</p>
+        <p>Please retain this invoice for your records.</p>
+    </div>
+
+    <script>
+        const CTX = '/oceanview';
+        const billId = new URLSearchParams(window.location.search).get('id') || window.location.pathname.split('/').pop();
+
+        function fmt(v) { return '£' + (Number(v)||0).toFixed(2); }
+        function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}); }
+
+        async function load() {
+            const token = localStorage.getItem('ov_token');
+            const res = await fetch(CTX + '/api/bills/' + billId, { headers: { Authorization: 'Bearer ' + token } });
+            if (!res.ok) { document.body.innerHTML = '<p style="text-align:center;padding:40px;color:red">Bill not found</p>'; return; }
+            const b = await res.json();
+
+            document.getElementById('pGuest').textContent = b.guestName || b.customerName || '—';
+            document.getElementById('pEmail').textContent = b.guestEmail || '';
+            document.getElementById('pPhone').textContent = b.guestPhone || '';
+            document.getElementById('pBillNum').textContent = b.billNumber || 'INV-' + b.id;
+            document.getElementById('pDate').textContent = fmtDate(b.billDate || b.createdAt);
+            document.getElementById('pStatus').textContent = b.paymentStatus || b.status || 'PENDING';
+            document.getElementById('pRes').textContent = b.reservationNumber || '—';
+            document.getElementById('pRoom').textContent = b.roomNumber ? 'Room ' + b.roomNumber : '—';
+            document.getElementById('pIn').textContent = fmtDate(b.checkInDate);
+            document.getElementById('pOut').textContent = fmtDate(b.checkOutDate);
+
+            const rate = b.roomRate || 0, nights = b.numberOfNights || 1;
+            let html = `<tr><td>Room (${b.roomType||'Standard'})</td><td class="text-end">${nights}</td><td class="text-end">${fmt(rate)}</td><td class="text-end">${fmt(rate*nights)}</td></tr>`;
+            if (b.additionalCharges) b.additionalCharges.forEach(c => { html += `<tr><td>${c.description}</td><td class="text-end">1</td><td class="text-end">${fmt(c.amount)}</td><td class="text-end">${fmt(c.amount)}</td></tr>`; });
+            document.getElementById('pCharges').innerHTML = html;
+
+            document.getElementById('pSub').textContent = fmt(b.subTotal || b.amount || rate*nights);
+            document.getElementById('pTax').textContent = fmt(b.taxAmount || b.tax || 0);
+            document.getElementById('pTotal').textContent = fmt(b.totalAmount || b.total || 0);
+            if ((b.discountAmount||0) > 0) { document.getElementById('pDiscRow').style.display=''; document.getElementById('pDisc').textContent = '-'+fmt(b.discountAmount); }
+        }
+        load();
+    </script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Reports Dashboard')}">
+    <title>Reports – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Reports & Analytics')}"></header>
+
+    <div class="ov-content">
+        <!-- Header -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2 animate-in">
+            <div>
+                <h4 class="fw-bold mb-1">Reports &amp; Analytics</h4>
+                <p class="text-muted mb-0">Resort performance overview and insights</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/reports/monthly}" class="btn btn-outline-ocean">
+                    <i class="fas fa-calendar-alt me-2"></i>Monthly Report
+                </a>
+                <a th:href="@{/reports/weekly}" class="btn btn-outline-ocean">
+                    <i class="fas fa-calendar-week me-2"></i>Weekly Report
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="row g-3 mb-4 animate-in delay-1">
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card blue">
+                    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-label">Total Reservations</div>
+                    <div class="stat-value" id="kpiReservations">0</div>
+                    <div class="stat-change" id="kpiResChange"></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card green">
+                    <div class="stat-icon"><i class="fas fa-pound-sign"></i></div>
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value" id="kpiRevenue">—</div>
+                    <div class="stat-change" id="kpiRevChange"></div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card gold">
+                    <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                    <div class="stat-label">Occupancy Rate</div>
+                    <div class="stat-value" id="kpiOccupancy">—</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="stat-card danger">
+                    <div class="stat-icon"><i class="fas fa-pound-sign"></i></div>
+                    <div class="stat-label">Avg. Daily Revenue</div>
+                    <div class="stat-value" id="kpiAvgRev">—</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Revenue Chart -->
+            <div class="col-lg-8 animate-in delay-2">
+                <div class="ov-card">
+                    <div class="card-body-ov">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0"><i class="fas fa-chart-line me-2 text-ocean"></i>Revenue Trend</h6>
+                            <select class="form-select ov-input" style="width:auto;font-size:.85rem" id="revPeriod" onchange="loadReportData()">
+                                <option value="6">Last 6 Months</option>
+                                <option value="12">Last 12 Months</option>
+                            </select>
+                        </div>
+                        <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Type Distribution -->
+            <div class="col-lg-4 animate-in delay-2">
+                <div class="ov-card">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-chart-pie me-2 text-ocean"></i>Bookings by Room Type</h6>
+                        <div class="chart-container"><canvas id="roomTypeChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reservation Status -->
+            <div class="col-lg-6 animate-in delay-3">
+                <div class="ov-card">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-ocean"></i>Reservation Status Breakdown</h6>
+                        <div class="chart-container"><canvas id="statusChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Rooms -->
+            <div class="col-lg-6 animate-in delay-3">
+                <div class="ov-card">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-trophy me-2 text-ocean"></i>Most Booked Rooms</h6>
+                        <div id="topRoomsList">
+                            <div class="text-center text-muted py-3">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="col-12 animate-in delay-3">
+                <div class="ov-card">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-file-alt me-2 text-ocean"></i>Detailed Reports</h6>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <a th:href="@{/reports/monthly}" class="d-block p-4 rounded-3 text-center text-decoration-none" style="background:var(--ov-primary-light);transition:.2s" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
+                                    <i class="fas fa-calendar-alt text-ocean d-block mb-2" style="font-size:2rem"></i>
+                                    <strong class="d-block">Monthly Report</strong>
+                                    <small class="text-muted">Revenue, occupancy &amp; trends</small>
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a th:href="@{/reports/weekly}" class="d-block p-4 rounded-3 text-center text-decoration-none" style="background:#f0fdf4;transition:.2s" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
+                                    <i class="fas fa-calendar-week d-block mb-2" style="font-size:2rem;color:#16a34a"></i>
+                                    <strong class="d-block">Weekly Report</strong>
+                                    <small class="text-muted">Weekly performance summary</small>
+                                </a>
+                            </div>
+                            <div class="col-md-4">
+                                <a th:href="@{/bills}" class="d-block p-4 rounded-3 text-center text-decoration-none" style="background:#fef3c7;transition:.2s" onmouseenter="this.style.transform='translateY(-2px)'" onmouseleave="this.style.transform=''">
+                                    <i class="fas fa-file-invoice-dollar d-block mb-2" style="font-size:2rem;color:#d97706"></i>
+                                    <strong class="d-block">All Bills</strong>
+                                    <small class="text-muted">Complete billing history</small>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+let revChart, typeChart, statusChartObj;
+
+document.addEventListener('DOMContentLoaded', loadReportData);
+
+async function loadReportData() {
+    try {
+        const [resRes, roomRes, billRes] = await Promise.all([
+            api('/api/reservations'),
+            api('/api/rooms'),
+            api('/api/bills')
+        ]);
+
+        let reservations = [], rooms = [], bills = [];
+        if (resRes?.ok) reservations = await resRes.json();
+        if (roomRes?.ok) rooms = await roomRes.json();
+        if (billRes?.ok) bills = await billRes.json();
+        if (!Array.isArray(reservations)) reservations = [];
+        if (!Array.isArray(rooms)) rooms = [];
+        if (!Array.isArray(bills)) bills = [];
+
+        // KPIs
+        const totalRev = bills.reduce((s, b) => s + (b.totalAmount || b.total || 0), 0);
+        const avail = rooms.filter(r => r.available !== false).length;
+        const occ = rooms.length ? ((rooms.length - avail) / rooms.length * 100).toFixed(0) : 0;
+
+        document.getElementById('kpiReservations').textContent = reservations.length;
+        document.getElementById('kpiRevenue').textContent = formatCurrency(totalRev);
+        document.getElementById('kpiOccupancy').textContent = occ + '%';
+        document.getElementById('kpiAvgRev').textContent = formatCurrency(reservations.length ? totalRev / Math.max(1, reservations.length) : 0);
+
+        // Revenue Chart
+        renderRevenueChart(reservations, bills);
+        renderRoomTypeChart(reservations);
+        renderStatusChart(reservations);
+        renderTopRooms(reservations, rooms);
+
+    } catch (ex) { console.error('Report load error', ex); }
+}
+
+function renderRevenueChart(reservations, bills) {
+    const months = parseInt(document.getElementById('revPeriod').value);
+    const labels = [];
+    const data = [];
+    const now = new Date();
+
+    for (let i = months - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        labels.push(d.toLocaleString('en-GB', { month: 'short', year: '2-digit' }));
+        const monthBills = bills.filter(b => {
+            const bd = b.billDate || b.createdAt;
+            return bd && bd.startsWith(key);
+        });
+        data.push(monthBills.reduce((s, b) => s + (b.totalAmount || b.total || 0), 0));
+    }
+
+    if (revChart) revChart.destroy();
+    revChart = new Chart(document.getElementById('revenueChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Revenue (£)',
+                data,
+                backgroundColor: 'rgba(0,119,182,0.15)',
+                borderColor: '#0077b6',
+                borderWidth: 2,
+                borderRadius: 6,
+                hoverBackgroundColor: 'rgba(0,119,182,0.3)'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { callback: v => '£' + v.toLocaleString() } } }
+        }
+    });
+}
+
+function renderRoomTypeChart(reservations) {
+    const types = {};
+    reservations.forEach(r => {
+        const t = r.roomType || r.type || 'Other';
+        types[t] = (types[t] || 0) + 1;
+    });
+
+    if (typeChart) typeChart.destroy();
+    typeChart = new Chart(document.getElementById('roomTypeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(types),
+            datasets: [{
+                data: Object.values(types),
+                backgroundColor: ['#0077b6', '#00b4d8', '#c9a227', '#e07a5f', '#81b29a', '#6c757d']
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+}
+
+function renderStatusChart(reservations) {
+    const statuses = {};
+    reservations.forEach(r => {
+        const s = r.status || 'UNKNOWN';
+        statuses[s] = (statuses[s] || 0) + 1;
+    });
+    const colors = { CONFIRMED: '#0077b6', CHECKED_IN: '#16a34a', CHECKED_OUT: '#6c757d', CANCELLED: '#dc2626', PENDING: '#d97706' };
+
+    if (statusChartObj) statusChartObj.destroy();
+    statusChartObj = new Chart(document.getElementById('statusChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(statuses),
+            datasets: [{
+                data: Object.values(statuses),
+                backgroundColor: Object.keys(statuses).map(s => colors[s] || '#94a3b8'),
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+}
+
+function renderTopRooms(reservations, rooms) {
+    const counts = {};
+    reservations.forEach(r => {
+        const rid = r.roomId || (r.room && r.room.id);
+        if (rid) counts[rid] = (counts[rid] || 0) + 1;
+    });
+
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const container = document.getElementById('topRoomsList');
+
+    if (sorted.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center mb-0">No data yet</p>';
+        return;
+    }
+
+    const max = sorted[0][1];
+    container.innerHTML = sorted.map(([rid, count], i) => {
+        const room = rooms.find(r => r.id == rid);
+        const name = room ? `Room ${room.roomNumber}` : `Room #${rid}`;
+        const pct = (count / max * 100).toFixed(0);
+        return `
+            <div class="d-flex align-items-center mb-3">
+                <div class="me-3 text-center" style="width:28px"><span class="badge rounded-pill" style="background:${i === 0 ? '#c9a227' : 'var(--ov-primary)'};color:#fff">${i + 1}</span></div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong style="font-size:.9rem">${name}</strong>
+                        <span class="text-muted" style="font-size:.85rem">${count} booking(s)</span>
+                    </div>
+                    <div class="progress" style="height:6px;border-radius:3px"><div class="progress-bar" style="width:${pct}%;background:var(--ov-primary)"></div></div>
+                </div>
+            </div>`;
+    }).join('');
+}
+</script>
+
+</body>
+</html>

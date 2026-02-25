@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" th:content="'0;url=/oceanview/bills/' + ${#strings.isEmpty(id) ? '' : id}" />
+    <title>Redirecting...</title>
+</head>
+<body>
+    <script>
+        // Redirect to the bill detail page
+        const path = window.location.pathname;
+        const id = path.split('/').pop();
+        window.location.href = path.replace('/bill/view', '/bills/' + id).replace('/view', '');
+    </script>
+</body>
+</html>

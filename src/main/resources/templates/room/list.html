@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Room Management')}">
+    <title>Rooms – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Room Management')}"></header>
+
+    <div class="ov-content">
+        <!-- Header -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2 animate-in">
+            <div>
+                <h4 class="fw-bold mb-1">Room Management</h4>
+                <p class="text-muted mb-0">View and manage all resort rooms</p>
+            </div>
+            <div class="d-flex gap-2" data-role="MANAGER">
+                <button class="btn btn-ocean" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                    <i class="fas fa-plus-circle me-2"></i> Add Room
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter & View Toggle -->
+        <div class="ov-card mb-4 animate-in delay-1">
+            <div class="card-body-ov">
+                <div class="filter-bar mb-0">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control ov-input" id="roomSearch"
+                               placeholder="Search by room number..." oninput="filterRoomsList()"/>
+                    </div>
+                    <select class="form-select ov-input" style="width:auto" id="roomTypeFilter" onchange="filterRoomsList()">
+                        <option value="">All Types</option>
+                        <option value="STANDARD">Standard</option>
+                        <option value="DELUXE">Deluxe</option>
+                        <option value="SUITE">Suite</option>
+                        <option value="PRESIDENTIAL">Presidential</option>
+                        <option value="FAMILY">Family</option>
+                    </select>
+                    <select class="form-select ov-input" style="width:auto" id="availFilter" onchange="filterRoomsList()">
+                        <option value="">All</option>
+                        <option value="true">Available</option>
+                        <option value="false">Occupied</option>
+                    </select>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-ocean active" id="gridBtn" onclick="setView('grid')">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="btn btn-outline-ocean" id="listBtn" onclick="setView('list')">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="row g-3 mb-4 animate-in delay-1">
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card blue">
+                    <div class="stat-label">Total Rooms</div>
+                    <div class="stat-value" id="totalRooms">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card green">
+                    <div class="stat-label">Available</div>
+                    <div class="stat-value" id="availRooms">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card danger">
+                    <div class="stat-label">Occupied</div>
+                    <div class="stat-value" id="occRooms">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card gold">
+                    <div class="stat-label">Avg. Rate / Night</div>
+                    <div class="stat-value" id="avgRate">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Room Cards (Grid View) -->
+        <div class="row g-3 animate-in delay-2" id="roomGrid"></div>
+
+        <!-- Room Table (List View) -->
+        <div class="ov-card d-none animate-in delay-2" id="roomListCard">
+            <div class="card-body-ov p-0">
+                <div class="table-responsive">
+                    <table class="ov-table">
+                        <thead>
+                            <tr>
+                                <th>Room #</th>
+                                <th>Type</th>
+                                <th>Rate / Night</th>
+                                <th>Capacity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roomTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Room Modal -->
+<div class="modal fade" id="addRoomModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="border-radius:var(--ov-radius)">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Add New Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRoomForm" onsubmit="addRoom(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Room Number</label>
+                        <input type="text" class="form-control ov-input" id="newRoomNumber" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Room Type</label>
+                        <select class="form-select ov-input" id="newRoomType" required>
+                            <option value="STANDARD">Standard</option>
+                            <option value="DELUXE">Deluxe</option>
+                            <option value="SUITE">Suite</option>
+                            <option value="PRESIDENTIAL">Presidential</option>
+                            <option value="FAMILY">Family</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Rate per Night (£)</label>
+                        <input type="number" class="form-control ov-input" id="newRoomRate" step="0.01" min="0" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Max Occupancy</label>
+                        <input type="number" class="form-control ov-input" id="newRoomCapacity" min="1" max="10" value="2" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea class="form-control ov-input" id="newRoomDesc" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-ocean w-100">
+                        <i class="fas fa-plus-circle me-2"></i>Add Room
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+let rooms = [];
+let viewMode = 'grid';
+
+document.addEventListener('DOMContentLoaded', loadRooms);
+
+async function loadRooms() {
+    try {
+        const res = await api('/api/rooms');
+        if (res?.ok) {
+            rooms = await res.json();
+            if (!Array.isArray(rooms)) rooms = [];
+            updateRoomStats();
+            filterRoomsList();
+        }
+    } catch (ex) {
+        document.getElementById('roomGrid').innerHTML = '<div class="col-12 text-center text-danger py-4">Failed to load rooms</div>';
+    }
+}
+
+function updateRoomStats() {
+    const avail = rooms.filter(r => r.available !== false);
+    document.getElementById('totalRooms').textContent = rooms.length;
+    document.getElementById('availRooms').textContent = avail.length;
+    document.getElementById('occRooms').textContent = rooms.length - avail.length;
+    const avg = rooms.length ? rooms.reduce((s, r) => s + (r.pricePerNight || r.ratePerNight || 0), 0) / rooms.length : 0;
+    document.getElementById('avgRate').textContent = formatCurrency(avg);
+}
+
+function filterRoomsList() {
+    const search = document.getElementById('roomSearch').value.toLowerCase();
+    const type = document.getElementById('roomTypeFilter').value;
+    const avail = document.getElementById('availFilter').value;
+
+    let filtered = rooms.filter(r => {
+        const matchSearch = !search || (r.roomNumber || '').toLowerCase().includes(search);
+        const matchType = !type || (r.roomType || r.type) === type;
+        const matchAvail = !avail || String(r.available !== false) === avail;
+        return matchSearch && matchType && matchAvail;
+    });
+
+    renderRooms(filtered);
+}
+
+function setView(mode) {
+    viewMode = mode;
+    document.getElementById('gridBtn').classList.toggle('active', mode === 'grid');
+    document.getElementById('listBtn').classList.toggle('active', mode === 'list');
+    document.getElementById('roomGrid').classList.toggle('d-none', mode === 'list');
+    document.getElementById('roomListCard').classList.toggle('d-none', mode === 'grid');
+    filterRoomsList();
+}
+
+function renderRooms(list) {
+    const icons = { STANDARD: 'bed', DELUXE: 'gem', SUITE: 'crown', PRESIDENTIAL: 'star', FAMILY: 'users' };
+
+    if (viewMode === 'grid') {
+        const container = document.getElementById('roomGrid');
+        if (list.length === 0) {
+            container.innerHTML = '<div class="col-12"><div class="empty-state"><i class="fas fa-door-closed"></i><h5>No Rooms Found</h5></div></div>';
+            return;
+        }
+        container.innerHTML = list.map(r => {
+            const t = r.roomType || r.type || 'STANDARD';
+            return `
+            <div class="col-sm-6 col-lg-4 col-xl-3">
+                <div class="room-card">
+                    <div class="room-img">
+                        <i class="fas fa-${icons[t] || 'bed'}"></i>
+                        <div class="room-price">${formatCurrency(r.pricePerNight || r.ratePerNight || 0)}</div>
+                    </div>
+                    <div class="room-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="mb-1">Room ${r.roomNumber || r.id}</h5>
+                            <span class="badge-status ${r.available !== false ? 'badge-confirmed' : 'badge-cancelled'}" style="font-size:.7rem">
+                                ${r.available !== false ? 'AVAILABLE' : 'OCCUPIED'}
+                            </span>
+                        </div>
+                        ${roomTypeBadge(t)}
+                        <div class="room-features">
+                            <span><i class="fas fa-users"></i> ${r.maxOccupancy || r.capacity || 2}</span>
+                            <span><i class="fas fa-bed"></i> ${t}</span>
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <a href="${CTX}/rooms/${r.id}" class="btn btn-sm btn-outline-ocean flex-grow-1">Details</a>
+                            <button class="btn btn-sm btn-outline-danger" data-role="MANAGER"
+                                    onclick="deleteRoom(${r.id})" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+    } else {
+        const tbody = document.getElementById('roomTableBody');
+        if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="fas fa-door-closed"></i><h5>No Rooms Found</h5></div></td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.map(r => `
+            <tr>
+                <td class="fw-semibold">Room ${r.roomNumber || r.id}</td>
+                <td>${roomTypeBadge(r.roomType || r.type)}</td>
+                <td>${formatCurrency(r.pricePerNight || r.ratePerNight || 0)}</td>
+                <td><i class="fas fa-users me-1 text-muted"></i>${r.maxOccupancy || r.capacity || 2}</td>
+                <td><span class="badge-status ${r.available !== false ? 'badge-confirmed' : 'badge-cancelled'}">${r.available !== false ? 'AVAILABLE' : 'OCCUPIED'}</span></td>
+                <td>
+                    <a href="${CTX}/rooms/${r.id}" class="btn btn-sm btn-outline-ocean">View</a>
+                    <button class="btn btn-sm btn-outline-danger" data-role="MANAGER" onclick="deleteRoom(${r.id})"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`).join('');
+    }
+    updateUserUI();
+}
+
+async function addRoom(e) {
+    e.preventDefault();
+    try {
+        const res = await api('/api/rooms', {
+            method: 'POST',
+            body: {
+                roomNumber: document.getElementById('newRoomNumber').value,
+                roomType: document.getElementById('newRoomType').value,
+                type: document.getElementById('newRoomType').value,
+                pricePerNight: parseFloat(document.getElementById('newRoomRate').value),
+                ratePerNight: parseFloat(document.getElementById('newRoomRate').value),
+                maxOccupancy: parseInt(document.getElementById('newRoomCapacity').value),
+                capacity: parseInt(document.getElementById('newRoomCapacity').value),
+                description: document.getElementById('newRoomDesc').value
+            }
+        });
+        if (res?.ok) {
+            showToast('Room added successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addRoomModal')).hide();
+            document.getElementById('addRoomForm').reset();
+            loadRooms();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(err.message || 'Failed to add room', 'error');
+        }
+    } catch (ex) { showToast('Network error', 'error'); }
+}
+
+async function deleteRoom(id) {
+    if (!await confirmAction('Delete this room permanently?')) return;
+    const res = await api(`/api/rooms/${id}`, { method: 'DELETE' });
+    if (res?.ok) { showToast('Room deleted', 'success'); loadRooms(); }
+    else showToast('Failed to delete room', 'error');
+}
+</script>
+
+</body>
+</html>

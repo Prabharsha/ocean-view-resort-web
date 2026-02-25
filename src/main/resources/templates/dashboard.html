@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Dashboard')}">
+    <title>Dashboard – Ocean View Resort</title>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<!-- Main Content -->
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Dashboard')}"></header>
+
+    <div class="ov-content">
+        <!-- Welcome Banner -->
+        <div class="ov-card mb-4 animate-in" style="background:linear-gradient(135deg,var(--ov-dark),var(--ov-primary-dark));color:white;border:none">
+            <div class="card-body-ov d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1">Welcome back, <span id="welcomeName">User</span>! 👋</h4>
+                    <p class="mb-0 opacity-75">Here's what's happening at Ocean View Resort today.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/reservations/create}" class="btn btn-gold">
+                        <i class="fas fa-plus me-1"></i> New Reservation
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stat Cards Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3 animate-in delay-1">
+                <div class="stat-card blue">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Total Reservations</div>
+                            <div class="stat-value" id="statReservations">—</div>
+                            <div class="stat-trend up" id="statResTrend"><i class="fas fa-arrow-up me-1"></i>12% this month</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3 animate-in delay-2">
+                <div class="stat-card green">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Available Rooms</div>
+                            <div class="stat-value" id="statRooms">—</div>
+                            <div class="stat-trend" id="statRoomsTrend" style="color:var(--ov-gray)">out of <span id="statTotalRooms">0</span> total</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-door-open"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3 animate-in delay-3">
+                <div class="stat-card gold">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Today's Check-ins</div>
+                            <div class="stat-value" id="statCheckins">—</div>
+                            <div class="stat-trend" style="color:var(--ov-gray)"><span id="statCheckouts">0</span> check-outs</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-sign-in-alt"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3 animate-in delay-4">
+                <div class="stat-card teal" data-role="MANAGER,STAFF">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Monthly Revenue</div>
+                            <div class="stat-value" id="statRevenue">—</div>
+                            <div class="stat-trend up" id="statRevTrend"><i class="fas fa-arrow-up me-1"></i>8% vs last month</div>
+                        </div>
+                        <div class="stat-icon"><i class="fas fa-sterling-sign"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-8 animate-in delay-2">
+                <div class="ov-card">
+                    <div class="card-header-ov">
+                        <h5><i class="fas fa-chart-line me-2 text-primary"></i>Revenue Overview</h5>
+                        <select class="form-select form-select-sm" style="width:auto" id="revenueRange">
+                            <option value="6">Last 6 Months</option>
+                            <option value="12" selected>Last 12 Months</option>
+                        </select>
+                    </div>
+                    <div class="card-body-ov">
+                        <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 animate-in delay-3">
+                <div class="ov-card">
+                    <div class="card-header-ov">
+                        <h5><i class="fas fa-chart-pie me-2" style="color:var(--ov-accent)"></i>Room Occupancy</h5>
+                    </div>
+                    <div class="card-body-ov">
+                        <div class="chart-container" style="height:260px"><canvas id="occupancyChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Reservations & Quick Actions -->
+        <div class="row g-3">
+            <div class="col-lg-8 animate-in delay-3">
+                <div class="ov-card">
+                    <div class="card-header-ov">
+                        <h5><i class="fas fa-clock me-2" style="color:var(--ov-secondary)"></i>Recent Reservations</h5>
+                        <a th:href="@{/reservations}" class="btn btn-sm btn-outline-ocean">View All</a>
+                    </div>
+                    <div class="card-body-ov p-0">
+                        <div class="table-responsive">
+                            <table class="ov-table">
+                                <thead>
+                                    <tr>
+                                        <th>Reservation #</th>
+                                        <th>Guest</th>
+                                        <th>Room</th>
+                                        <th>Check-in</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentReservations">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            <div class="ov-spinner"></div><br/>Loading...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 animate-in delay-4">
+                <div class="ov-card">
+                    <div class="card-header-ov">
+                        <h5><i class="fas fa-bolt me-2" style="color:var(--ov-warning)"></i>Quick Actions</h5>
+                    </div>
+                    <div class="card-body-ov">
+                        <div class="d-grid gap-2">
+                            <a th:href="@{/reservations/create}" class="btn btn-ocean text-start">
+                                <i class="fas fa-plus-circle me-2"></i> New Reservation
+                            </a>
+                            <a th:href="@{/rooms}" class="btn btn-outline-ocean text-start">
+                                <i class="fas fa-search me-2"></i> Check Room Availability
+                            </a>
+                            <a th:href="@{/bills}" class="btn btn-outline-ocean text-start" data-role="MANAGER,STAFF">
+                                <i class="fas fa-file-invoice-dollar me-2"></i> Manage Bills
+                            </a>
+                            <a th:href="@{/reports}" class="btn btn-outline-ocean text-start" data-role="MANAGER">
+                                <i class="fas fa-chart-bar me-2"></i> View Reports
+                            </a>
+                            <a th:href="@{/help}" class="btn btn-outline-ocean text-start">
+                                <i class="fas fa-question-circle me-2"></i> Help &amp; FAQ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Activity -->
+                <div class="ov-card mt-3">
+                    <div class="card-header-ov">
+                        <h5><i class="fas fa-stream me-2" style="color:var(--ov-success)"></i>Today's Activity</h5>
+                    </div>
+                    <div class="card-body-ov" id="todayActivity">
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width:36px;height:36px;min-width:36px;background:rgba(0,119,182,.1)">
+                                <i class="fas fa-sign-in-alt text-primary" style="font-size:.85rem"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold" style="font-size:.88rem">Check-ins expected</div>
+                                <div class="text-muted" style="font-size:.8rem" id="actCheckins">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3 mb-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width:36px;height:36px;min-width:36px;background:rgba(45,159,78,.1)">
+                                <i class="fas fa-sign-out-alt text-success" style="font-size:.85rem"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold" style="font-size:.88rem">Check-outs expected</div>
+                                <div class="text-muted" style="font-size:.8rem" id="actCheckouts">Loading...</div>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width:36px;height:36px;min-width:36px;background:rgba(201,162,39,.12)">
+                                <i class="fas fa-concierge-bell" style="font-size:.85rem;color:var(--ov-accent)"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold" style="font-size:.88rem">Pending reservations</div>
+                                <div class="text-muted" style="font-size:.8rem" id="actPending">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const user = OVAuth.getUser();
+    if (user) {
+        document.getElementById('welcomeName').textContent = user.firstName || user.username;
+    }
+
+    // Initialize charts with sample data (will be replaced by API data when available)
+    initRevenueChart();
+    initOccupancyChart();
+    loadDashboardData();
+});
+
+function initRevenueChart() {
+    const ctx = document.getElementById('revenueChart');
+    if (!ctx) return;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'Revenue (£)',
+                data: [42000,38000,55000,62000,48000,71000,83000,79000,65000,58000,52000,69000],
+                backgroundColor: 'rgba(0,119,182,.7)',
+                borderRadius: 6,
+                borderSkipped: false
+            },{
+                label: 'Occupancy %',
+                data: [65,58,72,80,62,85,92,88,78,70,64,82],
+                type: 'line',
+                borderColor: '#c9a227',
+                backgroundColor: 'rgba(201,162,39,.1)',
+                fill: true,
+                tension: .4,
+                yAxisID: 'y1',
+                pointBackgroundColor: '#c9a227',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { position: 'top', labels: { usePointStyle: true, padding: 15 } }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => '£' + (v/1000) + 'k' },
+                    grid: { color: 'rgba(0,0,0,.05)' }
+                },
+                y1: {
+                    position: 'right',
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { callback: v => v + '%' },
+                    grid: { display: false }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function initOccupancyChart() {
+    const ctx = document.getElementById('occupancyChart');
+    if (!ctx) return;
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Occupied', 'Available', 'Maintenance'],
+            datasets: [{
+                data: [68, 25, 7],
+                backgroundColor: ['#0077b6', '#2d9f4e', '#f0ad4e'],
+                borderWidth: 0,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } }
+            }
+        }
+    });
+}
+
+async function loadDashboardData() {
+    try {
+        // Load rooms
+        const roomsRes = await api('/api/rooms');
+        if (roomsRes?.ok) {
+            const rooms = await roomsRes.json();
+            const available = Array.isArray(rooms) ? rooms.filter(r => r.available).length : 0;
+            document.getElementById('statRooms').textContent = available;
+            document.getElementById('statTotalRooms').textContent = Array.isArray(rooms) ? rooms.length : 0;
+        }
+
+        // Load recent reservations
+        const resRes = await api('/api/reservations');
+        if (resRes?.ok) {
+            const reservations = await resRes.json();
+            const list = Array.isArray(reservations) ? reservations : (reservations.content || []);
+            document.getElementById('statReservations').textContent = list.length;
+
+            const tbody = document.getElementById('recentReservations');
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state py-4"><i class="fas fa-calendar-times"></i><h5>No Reservations</h5><p>No reservations found yet.</p></div></td></tr>';
+            } else {
+                tbody.innerHTML = list.slice(0, 8).map(r => `
+                    <tr>
+                        <td><span class="fw-semibold text-primary">${r.reservationNumber || '—'}</span></td>
+                        <td>${r.customerName || r.customerId || '—'}</td>
+                        <td>${r.roomNumber || r.roomId || '—'}</td>
+                        <td>${formatDate(r.checkInDate)}</td>
+                        <td>${statusBadge(r.status)}</td>
+                        <td><a href="${CTX}/reservations/view/${r.id}" class="btn btn-sm btn-outline-ocean">View</a></td>
+                    </tr>`).join('');
+            }
+
+            // Stats
+            const today = new Date().toISOString().split('T')[0];
+            const checkins = list.filter(r => r.checkInDate === today && r.status !== 'CANCELLED').length;
+            const checkouts = list.filter(r => r.checkOutDate === today).length;
+            const pending = list.filter(r => r.status === 'PENDING').length;
+            document.getElementById('statCheckins').textContent = checkins;
+            document.getElementById('statCheckouts').textContent = checkouts;
+            document.getElementById('actCheckins').textContent = checkins + ' guests arriving today';
+            document.getElementById('actCheckouts').textContent = checkouts + ' guests departing today';
+            document.getElementById('actPending').textContent = pending + ' awaiting confirmation';
+        }
+    } catch (ex) {
+        console.error('Dashboard load error:', ex);
+    }
+}
+</script>
+
+</body>
+</html>

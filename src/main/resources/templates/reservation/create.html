@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('New Reservation')}">
+    <title>Create Reservation – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('New Reservation')}"></header>
+
+    <div class="ov-content">
+        <div class="ov-card animate-in">
+            <div class="card-body-ov">
+
+                <!-- Wizard Steps -->
+                <div class="wizard-steps">
+                    <div class="wizard-step active" id="ws1">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Guest Info</div>
+                    </div>
+                    <div class="wizard-step" id="ws2">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Room Selection</div>
+                    </div>
+                    <div class="wizard-step" id="ws3">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Confirmation</div>
+                    </div>
+                </div>
+
+                <form id="reservationForm" onsubmit="submitReservation(event)">
+
+                    <!-- Step 1: Guest & Dates -->
+                    <div class="wizard-panel active" id="panel1">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-user-circle me-2 text-primary"></i>Guest Information &amp; Dates</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Customer ID</label>
+                                <input type="number" class="form-control ov-input" id="customerId" required placeholder="Enter Customer ID"/>
+                                <div class="form-text">Enter the registered customer ID</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Number of Guests</label>
+                                <input type="number" class="form-control ov-input" id="numberOfGuests" min="1" max="10" value="1" required/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Check-in Date</label>
+                                <input type="date" class="form-control ov-input" id="checkInDate" required
+                                       onchange="checkAvailability()"/>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Check-out Date</label>
+                                <input type="date" class="form-control ov-input" id="checkOutDate" required
+                                       onchange="checkAvailability()"/>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Special Requests</label>
+                                <textarea class="form-control ov-input" id="specialRequests" rows="3"
+                                          placeholder="Any special requirements..."></textarea>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="button" class="btn btn-ocean" onclick="goToStep(2)">
+                                Next: Select Room <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Room Selection -->
+                    <div class="wizard-panel" id="panel2">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-bed me-2 text-primary"></i>Select a Room</h5>
+
+                        <div class="filter-bar">
+                            <select class="form-select ov-input" style="width:auto" id="roomTypeFilter" onchange="filterRooms()">
+                                <option value="">All Room Types</option>
+                                <option value="STANDARD">Standard</option>
+                                <option value="DELUXE">Deluxe</option>
+                                <option value="SUITE">Suite</option>
+                                <option value="PRESIDENTIAL">Presidential</option>
+                                <option value="FAMILY">Family</option>
+                            </select>
+                        </div>
+
+                        <div class="row g-3" id="availableRooms">
+                            <div class="col-12 text-center py-4 text-muted">
+                                <i class="fas fa-info-circle me-2"></i>Select check-in and check-out dates first
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="selectedRoomId"/>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-ocean" onclick="goToStep(1)">
+                                <i class="fas fa-arrow-left me-2"></i> Back
+                            </button>
+                            <button type="button" class="btn btn-ocean" onclick="goToStep(3)" id="toStep3Btn" disabled>
+                                Next: Confirm <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Confirmation -->
+                    <div class="wizard-panel" id="panel3">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-clipboard-check me-2 text-primary"></i>Booking Summary</h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:var(--ov-sand)">
+                                    <h6 class="fw-bold mb-3">Guest Details</h6>
+                                    <div class="mb-2"><span class="text-muted">Customer ID:</span> <strong id="confCustomer"></strong></div>
+                                    <div class="mb-2"><span class="text-muted">Guests:</span> <strong id="confGuests"></strong></div>
+                                    <div><span class="text-muted">Special Requests:</span> <strong id="confRequests">—</strong></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:var(--ov-light)">
+                                    <h6 class="fw-bold mb-3">Stay Details</h6>
+                                    <div class="mb-2"><span class="text-muted">Room:</span> <strong id="confRoom"></strong></div>
+                                    <div class="mb-2"><span class="text-muted">Check-in:</span> <strong id="confCheckIn"></strong></div>
+                                    <div class="mb-2"><span class="text-muted">Check-out:</span> <strong id="confCheckOut"></strong></div>
+                                    <div class="mb-2"><span class="text-muted">Nights:</span> <strong id="confNights"></strong></div>
+                                    <hr/>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold" style="font-size:1.1rem">Estimated Total</span>
+                                        <span class="fw-bold text-primary" style="font-size:1.2rem" id="confTotal">£0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-ocean" onclick="goToStep(2)">
+                                <i class="fas fa-arrow-left me-2"></i> Back
+                            </button>
+                            <button type="submit" class="btn btn-ocean px-4" id="confirmBtn">
+                                <i class="fas fa-check-circle me-2"></i> Confirm Booking
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+let allRooms = [];
+let selectedRoom = null;
+
+// Set min date to today
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('checkInDate').min = today;
+    document.getElementById('checkOutDate').min = today;
+});
+
+function goToStep(step) {
+    // Validate step transitions
+    if (step === 2) {
+        const cid = document.getElementById('customerId').value;
+        const ci = document.getElementById('checkInDate').value;
+        const co = document.getElementById('checkOutDate').value;
+        if (!cid || !ci || !co) { showToast('Please fill in all required fields', 'warning'); return; }
+        if (new Date(co) <= new Date(ci)) { showToast('Check-out must be after check-in', 'warning'); return; }
+    }
+    if (step === 3 && !document.getElementById('selectedRoomId').value) {
+        showToast('Please select a room', 'warning'); return;
+    }
+
+    // Update wizard UI
+    for (let i = 1; i <= 3; i++) {
+        document.getElementById('panel' + i).classList.toggle('active', i === step);
+        const ws = document.getElementById('ws' + i);
+        ws.classList.remove('active', 'completed');
+        if (i < step) ws.classList.add('completed');
+        if (i === step) ws.classList.add('active');
+    }
+
+    // Populate confirmation
+    if (step === 3) populateConfirmation();
+}
+
+async function checkAvailability() {
+    const ci = document.getElementById('checkInDate').value;
+    const co = document.getElementById('checkOutDate').value;
+    if (!ci || !co || new Date(co) <= new Date(ci)) return;
+
+    const container = document.getElementById('availableRooms');
+    container.innerHTML = '<div class="col-12 text-center py-4"><div class="ov-spinner"></div><br/>Checking availability...</div>';
+
+    try {
+        const res = await api(`/api/rooms/available?checkIn=${ci}&checkOut=${co}`);
+        if (res?.ok) {
+            allRooms = await res.json();
+            renderRooms(allRooms);
+        } else {
+            // Fallback: load all rooms
+            const fallback = await api('/api/rooms');
+            if (fallback?.ok) {
+                allRooms = (await fallback.json()).filter(r => r.available);
+                renderRooms(allRooms);
+            }
+        }
+    } catch (ex) {
+        container.innerHTML = '<div class="col-12 text-center py-4 text-danger">Failed to load rooms</div>';
+    }
+}
+
+function filterRooms() {
+    const type = document.getElementById('roomTypeFilter').value;
+    const filtered = type ? allRooms.filter(r => r.roomType === type || r.type === type) : allRooms;
+    renderRooms(filtered);
+}
+
+function renderRooms(rooms) {
+    const container = document.getElementById('availableRooms');
+    if (rooms.length === 0) {
+        container.innerHTML = '<div class="col-12"><div class="empty-state"><i class="fas fa-bed"></i><h5>No Rooms Available</h5><p>Try different dates or room type.</p></div></div>';
+        return;
+    }
+    container.innerHTML = rooms.map(r => `
+        <div class="col-md-6 col-lg-4">
+            <div class="room-card ${selectedRoom?.id === r.id ? 'border border-primary border-2' : ''}"
+                 style="cursor:pointer" onclick="selectRoom(${r.id}, this)">
+                <div class="room-img">
+                    <i class="fas fa-${r.roomType === 'SUITE' || r.type === 'SUITE' ? 'crown' : r.roomType === 'PRESIDENTIAL' || r.type === 'PRESIDENTIAL' ? 'star' : r.roomType === 'FAMILY' || r.type === 'FAMILY' ? 'users' : 'bed'}"></i>
+                    <div class="room-price">${formatCurrency(r.pricePerNight || r.ratePerNight || 0)}/night</div>
+                </div>
+                <div class="room-body">
+                    <h5>Room ${r.roomNumber || r.id}</h5>
+                    <div>${roomTypeBadge(r.roomType || r.type)}</div>
+                    <div class="room-features">
+                        <span><i class="fas fa-users"></i> ${r.capacity || r.maxOccupancy || 2} guests</span>
+                        <span><i class="fas fa-expand"></i> ${r.size || '30'}m²</span>
+                    </div>
+                    <div class="mt-2 text-muted" style="font-size:.82rem">${r.description || 'Comfortable room with ocean views'}</div>
+                </div>
+            </div>
+        </div>`).join('');
+}
+
+function selectRoom(id, el) {
+    selectedRoom = allRooms.find(r => r.id === id);
+    document.getElementById('selectedRoomId').value = id;
+    document.getElementById('toStep3Btn').disabled = false;
+
+    document.querySelectorAll('.room-card').forEach(c => c.classList.remove('border', 'border-primary', 'border-2'));
+    el.querySelector('.room-card')?.classList.add('border', 'border-primary', 'border-2') ||
+    el.classList.add('border', 'border-primary', 'border-2');
+    showToast('Room ' + (selectedRoom?.roomNumber || id) + ' selected', 'info');
+}
+
+function populateConfirmation() {
+    const ci = document.getElementById('checkInDate').value;
+    const co = document.getElementById('checkOutDate').value;
+    const nights = Math.ceil((new Date(co) - new Date(ci)) / 86400000);
+    const rate = selectedRoom?.pricePerNight || selectedRoom?.ratePerNight || 0;
+
+    document.getElementById('confCustomer').textContent = document.getElementById('customerId').value;
+    document.getElementById('confGuests').textContent = document.getElementById('numberOfGuests').value;
+    document.getElementById('confRequests').textContent = document.getElementById('specialRequests').value || '—';
+    document.getElementById('confRoom').textContent = 'Room ' + (selectedRoom?.roomNumber || selectedRoom?.id) + ' (' + (selectedRoom?.roomType || selectedRoom?.type) + ')';
+    document.getElementById('confCheckIn').textContent = formatDate(ci);
+    document.getElementById('confCheckOut').textContent = formatDate(co);
+    document.getElementById('confNights').textContent = nights;
+    document.getElementById('confTotal').textContent = formatCurrency(nights * rate);
+}
+
+async function submitReservation(e) {
+    e.preventDefault();
+    const btn = document.getElementById('confirmBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Booking...';
+
+    try {
+        const res = await api('/api/reservations', {
+            method: 'POST',
+            body: {
+                customerId: parseInt(document.getElementById('customerId').value),
+                roomId: parseInt(document.getElementById('selectedRoomId').value),
+                checkInDate: document.getElementById('checkInDate').value,
+                checkOutDate: document.getElementById('checkOutDate').value,
+                numberOfGuests: parseInt(document.getElementById('numberOfGuests').value),
+                specialRequests: document.getElementById('specialRequests').value
+            }
+        });
+
+        if (res?.ok) {
+            const data = await res.json();
+            showToast('Reservation created successfully!', 'success');
+            setTimeout(() => window.location.href = CTX + '/reservations/view/' + data.id, 800);
+        } else {
+            const err = await res.json().catch(() => ({}));
+            showToast(err.message || 'Failed to create reservation', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle me-2"></i> Confirm Booking';
+        }
+    } catch (ex) {
+        showToast('Network error. Please try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle me-2"></i> Confirm Booking';
+    }
+}
+</script>
+
+</body>
+</html>
