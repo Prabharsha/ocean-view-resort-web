@@ -3,6 +3,7 @@ package com.oceanview.resort.dto;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * Data Transfer Object for Bill entity.
@@ -25,4 +26,5 @@ public class BillDTO {
     private BigDecimal discountAmount;
     private BigDecimal totalAmount;
     private String paymentStatus;
+    private LocalDateTime generatedAt;
 }

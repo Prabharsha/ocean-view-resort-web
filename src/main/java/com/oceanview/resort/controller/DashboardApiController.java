@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,6 +48,61 @@ public class DashboardApiController {
             description = "Returns a comprehensive dashboard metrics snapshot")
     public ResponseEntity<Map<String, Object>> getDashboardMetrics() {
         return ResponseEntity.ok(buildMetrics());
+    }
+
+    /**
+     * Returns monthly revenue and occupancy data for the Revenue Overview chart.
+     *
+     * @param months number of months to look back (default 12)
+     */
+    @GetMapping("/revenue")
+    @Operation(summary = "Monthly Revenue Chart Data",
+            description = "Returns per-month revenue and occupancy % for the chart")
+    public ResponseEntity<Map<String, Object>> getRevenueChartData(
+            @RequestParam(defaultValue = "12") int months) {
+
+        List<String> labels   = new ArrayList<>();
+        List<BigDecimal> revenue   = new ArrayList<>();
+        List<Double>     occupancy = new ArrayList<>();
+
+        YearMonth now = YearMonth.now();
+        long totalRooms = Math.max(1, roomRepository.count());
+
+        for (int i = months - 1; i >= 0; i--) {
+            YearMonth ym = now.minusMonths(i);
+            LocalDate start = ym.atDay(1);
+            LocalDate end   = ym.atEndOfMonth();
+
+            // Label e.g. "Mar 26"
+            labels.add(start.getMonth().getDisplayName(
+                    java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                    + " " + String.format("%02d", ym.getYear() % 100));
+
+            // Revenue: sum totalAmount of PAID bills whose generatedAt falls in this month
+            BigDecimal monthRevenue = billRepository.findAll().stream()
+                    .filter(b -> "PAID".equals(b.getPaymentStatus())
+                            && b.getGeneratedAt() != null
+                            && !b.getGeneratedAt().toLocalDate().isBefore(start)
+                            && !b.getGeneratedAt().toLocalDate().isAfter(end))
+                    .map(b -> b.getTotalAmount() != null ? b.getTotalAmount() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            revenue.add(monthRevenue);
+
+            // Occupancy: count reservations that overlap this month (not cancelled)
+            long occupied = reservationRepository.findAll().stream()
+                    .filter(r -> r.getStatus() != ReservationStatus.CANCELLED
+                            && r.getCheckInDate() != null && r.getCheckOutDate() != null
+                            && !r.getCheckInDate().isAfter(end)
+                            && !r.getCheckOutDate().isBefore(start))
+                    .count();
+            occupancy.add(Math.min(100.0, Math.round((double) occupied / totalRooms * 100.0)));
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("labels",    labels);
+        result.put("revenue",   revenue);
+        result.put("occupancy", occupancy);
+        return ResponseEntity.ok(result);
     }
 
     /**

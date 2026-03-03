@@ -17,6 +17,5 @@ public interface BillMapper {
 
     @Mapping(target = "reservation", ignore = true)
     @Mapping(target = "payments", ignore = true)
-    @Mapping(target = "generatedAt", ignore = true)
     Bill toEntity(BillDTO dto);
 }

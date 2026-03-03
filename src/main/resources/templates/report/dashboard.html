@@ -211,7 +211,7 @@ function renderRevenueChart(reservations, bills) {
         data: {
             labels,
             datasets: [{
-                label: 'Revenue (£)',
+                label: 'Revenue (LKR)',
                 data,
                 backgroundColor: 'rgba(0,119,182,0.15)',
                 borderColor: '#0077b6',
@@ -223,7 +223,7 @@ function renderRevenueChart(reservations, bills) {
         options: {
             responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { callback: v => '£' + v.toLocaleString() } } }
+            scales: { y: { beginAtZero: true, ticks: { callback: v => 'Rs.' + v.toLocaleString() } } }
         }
     });
 }

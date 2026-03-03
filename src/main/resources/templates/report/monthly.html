@@ -166,12 +166,12 @@ function loadMonthlyReport() {
         data: {
             labels: Array.from({ length: daysInMonth }, (_, i) => i + 1),
             datasets: [{
-                label: 'Revenue (£)', data: dailyRev,
+                label: 'Revenue (LKR)', data: dailyRev,
                 borderColor: '#0077b6', backgroundColor: 'rgba(0,119,182,0.1)',
                 fill: true, tension: .4, pointRadius: 2
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '£' + v } } } }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => 'Rs.' + v } } } }
     });
 
     // Check-in/out chart
