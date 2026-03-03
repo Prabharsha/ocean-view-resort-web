@@ -1,0 +1,14 @@
+target/
+logs/
+*.log
+*.gz
+.git
+.gitignore
+.idea
+*.iml
+*.jpeg
+*.jpg
+*.png
+README.md
+project-impl-guidline.md
+
