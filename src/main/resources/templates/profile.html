@@ -121,21 +121,50 @@
 <script>
 document.addEventListener('DOMContentLoaded', loadProfile);
 
-function loadProfile() {
-    const user = OVAuth.getUser();
-    if (!user) { window.location.href = CTX + '/login'; return; }
+async function loadProfile() {
+    const cached = OVAuth.getUser();
+    if (!cached) { window.location.href = CTX + '/login'; return; }
 
-    document.getElementById('profileName').textContent = (user.firstName || '') + ' ' + (user.lastName || user.username || '');
-    document.getElementById('profileEmail').textContent = user.email || user.username || '';
-    document.getElementById('profileRole').textContent = user.role || 'USER';
+    // Fetch fresh data from API
+    try {
+        const res = await api('/api/auth/profile');
+        if (res && res.ok) {
+            const user = await res.json();
+            // Update localStorage with latest data
+            OVAuth.save({ user: {
+                userId:    user.id        || cached.userId || '',
+                username:  user.username  || '',
+                firstName: user.firstName || '',
+                lastName:  user.lastName  || '',
+                email:     user.email     || '',
+                phone:     user.phone     || '',
+                role:      user.role      || ''
+            }});
+            populateProfile(user);
+        } else {
+            populateProfile(cached);
+        }
+    } catch (e) {
+        populateProfile(cached);
+    }
+}
+
+function populateProfile(user) {
+    const firstName = user.firstName || '';
+    const lastName  = user.lastName  || '';
+    const fullName  = (firstName + ' ' + lastName).trim() || user.username || '';
+
+    document.getElementById('profileName').textContent  = fullName;
+    document.getElementById('profileEmail').textContent = user.email    || user.username || '';
+    document.getElementById('profileRole').textContent  = user.role     || 'USER';
     document.getElementById('profileSince').textContent = user.createdAt ? formatDate(user.createdAt) : 'N/A';
 
-    document.getElementById('profFirstName').value = user.firstName || '';
-    document.getElementById('profLastName').value = user.lastName || '';
-    document.getElementById('profEmail').value = user.email || '';
-    document.getElementById('profPhone').value = user.phone || '';
-    document.getElementById('profUsername').value = user.username || '';
-    document.getElementById('profRole').value = user.role || '';
+    document.getElementById('profFirstName').value = firstName;
+    document.getElementById('profLastName').value  = lastName;
+    document.getElementById('profEmail').value     = user.email    || '';
+    document.getElementById('profPhone').value     = user.phone    || '';
+    document.getElementById('profUsername').value  = user.username || '';
+    document.getElementById('profRole').value      = user.role     || '';
 }
 
 async function updateProfile(e) {
@@ -152,8 +181,17 @@ async function updateProfile(e) {
         });
         if (res?.ok) {
             const updated = await res.json();
-            OVAuth.setUser(updated);
-            loadProfile();
+            const cached = OVAuth.getUser() || {};
+            OVAuth.save({ user: {
+                userId:    cached.userId   || '',
+                username:  updated.username  || cached.username || '',
+                firstName: updated.firstName || '',
+                lastName:  updated.lastName  || '',
+                email:     updated.email     || '',
+                phone:     updated.phone     || '',
+                role:      updated.role      || cached.role || ''
+            }});
+            populateProfile(updated);
             showToast('Profile updated!', 'success');
         } else {
             const err = await res.json().catch(() => ({}));
@@ -174,9 +212,9 @@ async function changePassword(e) {
 
     try {
         const res = await api('/api/auth/change-password', {
-            method: 'POST',
+            method: 'PUT',
             body: {
-                currentPassword: document.getElementById('currentPwd').value,
+                oldPassword: document.getElementById('currentPwd').value,
                 newPassword: newPwd,
                 confirmPassword: confirmPwd
             }
