@@ -391,8 +391,8 @@ class ReservationServiceTest {
     @Test
     @DisplayName("RST-08: ReservationNumberGenerator produces unique numbers")
     void generateReservationNumber_ReturnsUniqueNumbers() {
-        // Arrange — use real generator (not mock)
-        ReservationNumberGenerator generator = new ReservationNumberGenerator();
+        // Arrange — use real generator with a mock repository (returns 0 by default)
+        ReservationNumberGenerator generator = new ReservationNumberGenerator(reservationRepository);
 
         // Act
         String number1 = generator.generateNext();

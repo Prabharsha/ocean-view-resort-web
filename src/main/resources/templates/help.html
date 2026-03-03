@@ -12,59 +12,87 @@
     <header th:replace="~{fragments/layout :: topbar('Help & FAQ')}"></header>
 
     <div class="ov-content">
-        <div class="animate-in">
-            <h4 class="fw-bold mb-1">Help Center</h4>
-            <p class="text-muted mb-4">Find answers to common questions and learn how to use the system</p>
+
+        <!-- Hero -->
+        <div class="animate-in mb-4">
+            <div class="p-4 rounded-4 d-flex align-items-center gap-4 flex-wrap" style="background:linear-gradient(135deg,var(--ov-primary),var(--ov-secondary));color:#fff">
+                <div>
+                    <h4 class="fw-bold mb-1"><i class="fas fa-life-ring me-2"></i>Help Center</h4>
+                    <p class="mb-3 opacity-75">Find answers, guides, and the latest updates for Ocean View Resort PMS</p>
+                    <div class="input-group" style="max-width:420px">
+                        <span class="input-group-text" style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:#fff"><i class="fas fa-search"></i></span>
+                        <input type="text" id="helpSearch" class="form-control" placeholder="Search help topics…"
+                               style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:#fff;placeholder-color:#fff"
+                               oninput="filterFAQ(this.value)"/>
+                    </div>
+                </div>
+                <div class="ms-auto d-none d-md-block opacity-25">
+                    <i class="fas fa-umbrella-beach" style="font-size:5rem"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick-nav chips -->
+        <div class="d-flex flex-wrap gap-2 mb-4 animate-in delay-1">
+            <button class="btn btn-sm btn-outline-ocean rounded-pill" onclick="scrollToSection('sec-quickstart')"><i class="fas fa-rocket me-1"></i>Quick Start</button>
+            <button class="btn btn-sm btn-outline-ocean rounded-pill" onclick="scrollToSection('sec-loyalty')"><i class="fas fa-star me-1"></i>Loyalty Program</button>
+            <button class="btn btn-sm btn-outline-ocean rounded-pill" onclick="scrollToSection('sec-payment')"><i class="fas fa-credit-card me-1"></i>Payments</button>
+            <button class="btn btn-sm btn-outline-ocean rounded-pill" onclick="scrollToSection('sec-reports')"><i class="fas fa-chart-bar me-1"></i>Reports</button>
+            <button class="btn btn-sm btn-outline-ocean rounded-pill" onclick="scrollToSection('sec-faq')"><i class="fas fa-question-circle me-1"></i>FAQ</button>
+            <button class="btn btn-sm btn-outline-ocean rounded-pill" onclick="scrollToSection('sec-whats-new')"><i class="fas fa-sparkles me-1"></i>What's New</button>
         </div>
 
         <div class="row g-4">
-            <!-- Quick Start -->
+            <!-- ═══════════════ LEFT COLUMN ═══════════════ -->
             <div class="col-lg-8">
-                <div class="ov-card mb-4 animate-in delay-1">
+
+                <!-- Quick Start -->
+                <div class="ov-card mb-4 animate-in delay-1" id="sec-quickstart">
                     <div class="card-body-ov">
                         <h5 class="fw-bold mb-3"><i class="fas fa-rocket me-2 text-ocean"></i>Quick Start Guide</h5>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:var(--ov-primary-light)">
+                                <div class="p-3 rounded-3 h-100" style="background:var(--ov-primary-light)">
                                     <h6 class="fw-bold"><i class="fas fa-calendar-plus me-2 text-ocean"></i>Making a Reservation</h6>
                                     <ol class="mb-0 ps-3" style="font-size:.9rem">
                                         <li>Go to <strong>Reservations → New Booking</strong></li>
                                         <li>Enter guest details and dates</li>
-                                        <li>Select available room</li>
+                                        <li>Select an available room</li>
                                         <li>Review and confirm booking</li>
                                     </ol>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:#f0fdf4">
+                                <div class="p-3 rounded-3 h-100" style="background:#f0fdf4">
                                     <h6 class="fw-bold"><i class="fas fa-sign-in-alt me-2" style="color:#16a34a"></i>Check-in Process</h6>
                                     <ol class="mb-0 ps-3" style="font-size:.9rem">
-                                        <li>Find reservation in list</li>
+                                        <li>Open the reservation</li>
                                         <li>Click <strong>Check In</strong> button</li>
-                                        <li>Verify guest identity</li>
-                                        <li>Room key is issued</li>
+                                        <li>Choose payment method (POS / Cash)</li>
+                                        <li>Optionally redeem loyalty points</li>
+                                        <li>Enter payment reference &amp; confirm</li>
                                     </ol>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:#fef3c7">
-                                    <h6 class="fw-bold"><i class="fas fa-file-invoice-dollar me-2" style="color:#d97706"></i>Generating Bills</h6>
+                                <div class="p-3 rounded-3 h-100" style="background:#fef3c7">
+                                    <h6 class="fw-bold"><i class="fas fa-file-invoice-dollar me-2" style="color:#d97706"></i>Billing &amp; Payment</h6>
                                     <ol class="mb-0 ps-3" style="font-size:.9rem">
-                                        <li>Go to reservation details</li>
-                                        <li>Click <strong>Generate Bill</strong></li>
-                                        <li>Review charges</li>
-                                        <li>Record payment</li>
+                                        <li>Bill is auto-generated on check-in</li>
+                                        <li>Apply loyalty-points discount if eligible</li>
+                                        <li>Record payment (Card / Cash)</li>
+                                        <li>Print or email the receipt</li>
                                     </ol>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="p-3 rounded-3" style="background:#fdf2f8">
+                                <div class="p-3 rounded-3 h-100" style="background:#fdf2f8">
                                     <h6 class="fw-bold"><i class="fas fa-sign-out-alt me-2" style="color:#db2777"></i>Check-out Process</h6>
                                     <ol class="mb-0 ps-3" style="font-size:.9rem">
-                                        <li>Ensure bill is settled</li>
+                                        <li>Confirm bill is settled</li>
                                         <li>Click <strong>Check Out</strong></li>
                                         <li>Print final invoice</li>
-                                        <li>Room becomes available</li>
+                                        <li>Room status returns to Available</li>
                                     </ol>
                                 </div>
                             </div>
@@ -72,125 +100,445 @@
                     </div>
                 </div>
 
-                <!-- FAQ Accordion -->
-                <div class="ov-card animate-in delay-2">
+                <!-- Loyalty Program -->
+                <div class="ov-card mb-4 animate-in delay-2" id="sec-loyalty">
                     <div class="card-body-ov">
-                        <h5 class="fw-bold mb-3"><i class="fas fa-question-circle me-2 text-ocean"></i>Frequently Asked Questions</h5>
-                        <div class="accordion" id="faqAccordion">
-                            <div class="ov-accordion-item">
-                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
-                                    <span>How do I create a new reservation?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="ov-accordion-body">
-                                    Navigate to <strong>Reservations → New Booking</strong> from the sidebar. Fill in the guest's details, select the check-in and check-out dates, choose an available room, and click <strong>Confirm Booking</strong>. You'll receive a reservation number upon successful creation.
+                        <h5 class="fw-bold mb-1"><i class="fas fa-star me-2" style="color:#f59e0b"></i>Loyalty Program</h5>
+                        <p class="text-muted mb-3" style="font-size:.9rem">Guests earn points on every stay. Points unlock tier benefits and can be redeemed for bill discounts.</p>
+
+                        <!-- Tier table -->
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm mb-0 align-middle" style="font-size:.88rem">
+                                <thead style="background:var(--ov-sand)">
+                                    <tr>
+                                        <th>Tier</th>
+                                        <th>Points Required</th>
+                                        <th>Benefits</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge" style="background:#cd7f32">🥉 Bronze</span></td>
+                                        <td>0 – 499 pts</td>
+                                        <td>5% room discount</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-secondary">🥈 Silver</span></td>
+                                        <td>500 – 1,999 pts</td>
+                                        <td>10% room discount + free breakfast</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge" style="background:#d97706">🥇 Gold</span></td>
+                                        <td>2,000 – 4,999 pts</td>
+                                        <td>15% discount + breakfast + late checkout</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge" style="background:#7c3aed">💎 Platinum</span></td>
+                                        <td>5,000+ pts</td>
+                                        <td>20% discount + all Gold benefits + room upgrade</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:#fff8e1;border:1.5px solid #ffe082">
+                                    <h6 class="fw-bold mb-2"><i class="fas fa-plus-circle me-2 text-warning"></i>Earning Points</h6>
+                                    <ul class="mb-0 ps-3" style="font-size:.88rem">
+                                        <li>Points are awarded automatically after each completed stay</li>
+                                        <li>Earning rate depends on room type and length of stay</li>
+                                        <li>Bonus points may be granted by managers for special occasions</li>
+                                    </ul>
                                 </div>
                             </div>
-                            <div class="ov-accordion-item">
-                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
-                                    <span>How do I check in a guest?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="ov-accordion-body">
-                                    Go to <strong>Reservations</strong>, find the reservation, and click the <strong>Check In</strong> button. The reservation status will change to "CHECKED_IN" and the room will be marked as occupied.
-                                </div>
-                            </div>
-                            <div class="ov-accordion-item">
-                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
-                                    <span>Can I modify a reservation after it's created?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="ov-accordion-body">
-                                    Yes! You can modify reservations that are in "CONFIRMED" status. Go to the reservation detail page and click <strong>Edit</strong>. You can change dates, room assignment, and guest details. Note: already checked-in reservations require manager approval to modify.
-                                </div>
-                            </div>
-                            <div class="ov-accordion-item">
-                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
-                                    <span>How do I generate and print a bill?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="ov-accordion-body">
-                                    Bills are generated automatically when a reservation is checked out, or you can create one manually from the reservation detail page. To print, go to <strong>Bills → View Bill → Print</strong>. The print-friendly version opens in a new window.
-                                </div>
-                            </div>
-                            <div class="ov-accordion-item">
-                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
-                                    <span>How do I apply a discount to a bill?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="ov-accordion-body">
-                                    Managers can apply discounts from the bill detail page. Enter the discount percentage and reason in the <strong>Apply Discount</strong> section. The bill total will be automatically recalculated.
-                                </div>
-                            </div>
-                            <div class="ov-accordion-item">
-                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
-                                    <span>What reports are available?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="ov-accordion-body">
-                                    The system provides <strong>Monthly Reports</strong> (revenue, occupancy, booking trends), <strong>Weekly Reports</strong> (short-term performance), and a <strong>Reports Dashboard</strong> with KPIs, charts, and analytics. All reports can be printed.
-                                </div>
-                            </div>
-                            <div class="ov-accordion-item">
-                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
-                                    <span>What are the different user roles?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                                <div class="ov-accordion-body">
-                                    <ul class="mb-0">
-                                        <li><strong>Customer</strong> – Can view/manage their own reservations and bills</li>
-                                        <li><strong>Staff</strong> – Can manage all reservations, check-in/out, and generate bills</li>
-                                        <li><strong>Manager</strong> – Full access: room management, reports, discounts, user management</li>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:#f0fdf4;border:1.5px solid #bbf7d0">
+                                    <h6 class="fw-bold mb-2"><i class="fas fa-bolt me-2 text-success"></i>Redeeming Points</h6>
+                                    <ul class="mb-0 ps-3" style="font-size:.88rem">
+                                        <li><strong>1 pt = LKR 0.10</strong> off the bill</li>
+                                        <li>Redeem during the check-in payment step</li>
+                                        <li>Use <em>Use Max Points</em> to apply the maximum allowed</li>
+                                        <li>Remaining balance is charged via POS or Cash</li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Sidebar -->
-            <div class="col-lg-4">
-                <!-- Keyboard Shortcuts -->
-                <div class="ov-card mb-4 animate-in delay-1">
+                <!-- Payment Processing -->
+                <div class="ov-card mb-4 animate-in delay-2" id="sec-payment">
                     <div class="card-body-ov">
-                        <h6 class="fw-bold mb-3"><i class="fas fa-keyboard me-2 text-ocean"></i>Keyboard Shortcuts</h6>
-                        <div class="d-flex justify-content-between py-2 border-bottom">
-                            <span>Go to Dashboard</span>
-                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Alt + D</kbd>
+                        <h5 class="fw-bold mb-1"><i class="fas fa-credit-card me-2 text-ocean"></i>Payment Processing</h5>
+                        <p class="text-muted mb-3" style="font-size:.9rem">Payments are collected at check-in. The system supports two payment methods.</p>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:var(--ov-primary-light)">
+                                    <h6 class="fw-bold"><i class="fas fa-credit-card me-2 text-ocean"></i>POS / Card</h6>
+                                    <ul class="mb-0 ps-3" style="font-size:.88rem">
+                                        <li>Select <strong>POS</strong> in the payment modal</li>
+                                        <li>Enter the POS terminal transaction reference (e.g. <code>TXN-2026-00123</code>)</li>
+                                        <li>Reference is stored against the bill for audit</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 rounded-3" style="background:#f0fdf4">
+                                    <h6 class="fw-bold"><i class="fas fa-money-bill-wave me-2" style="color:#16a34a"></i>Cash</h6>
+                                    <ul class="mb-0 ps-3" style="font-size:.88rem">
+                                        <li>Select <strong>Cash</strong> in the payment modal</li>
+                                        <li>Enter the front-desk cash receipt number (e.g. <code>RCT-2026-00045</code>)</li>
+                                        <li>Receipt number is recorded on the bill</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                        <div class="d-flex justify-content-between py-2 border-bottom">
-                            <span>New Reservation</span>
-                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Alt + N</kbd>
-                        </div>
-                        <div class="d-flex justify-content-between py-2 border-bottom">
-                            <span>Search</span>
-                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Ctrl + K</kbd>
-                        </div>
-                        <div class="d-flex justify-content-between py-2">
-                            <span>Toggle Sidebar</span>
-                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Alt + S</kbd>
+                        <div class="alert alert-info d-flex gap-2 align-items-start mb-0" style="font-size:.85rem">
+                            <i class="fas fa-info-circle mt-1"></i>
+                            <div>The check-in flow automatically: <strong>(1)</strong> marks the reservation as Checked In, <strong>(2)</strong> generates the bill, <strong>(3)</strong> applies any loyalty-point discount, and <strong>(4)</strong> records the payment — all in a single step.</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Contact -->
+                <!-- Reports -->
+                <div class="ov-card mb-4 animate-in delay-2" id="sec-reports">
+                    <div class="card-body-ov">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-ocean"></i>Reports &amp; Analytics</h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="p-3 rounded-3 text-center h-100" style="background:var(--ov-sand)">
+                                    <i class="fas fa-calendar-alt fa-2x mb-2" style="color:var(--ov-primary)"></i>
+                                    <h6 class="fw-bold">Monthly Report</h6>
+                                    <p class="text-muted mb-0" style="font-size:.83rem">Revenue, occupancy rate, booking trends, and top rooms for any month.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 rounded-3 text-center h-100" style="background:#f0fdf4">
+                                    <i class="fas fa-calendar-week fa-2x mb-2" style="color:#16a34a"></i>
+                                    <h6 class="fw-bold">Weekly Report</h6>
+                                    <p class="text-muted mb-0" style="font-size:.83rem">Short-term performance: check-ins, check-outs, and revenue by week.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 rounded-3 text-center h-100" style="background:#fef3c7">
+                                    <i class="fas fa-tachometer-alt fa-2x mb-2" style="color:#d97706"></i>
+                                    <h6 class="fw-bold">Reports Dashboard</h6>
+                                    <p class="text-muted mb-0" style="font-size:.83rem">Live KPIs, charts, and analytics overview. Supports PDF / print export.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 p-3 rounded-3" style="background:#f8fafc;font-size:.88rem">
+                            <strong>Tip:</strong> All report pages support browser printing (<kbd>Ctrl+P</kbd>). The Reports Dashboard also offers a PDF download button for the monthly summary.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- What's New -->
+                <div class="ov-card mb-4 animate-in delay-2" id="sec-whats-new">
+                    <div class="card-body-ov">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-sparkles me-2" style="color:var(--ov-accent)"></i>What's New</h5>
+
+                        <!-- v1.2.0 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;min-width:36px;background:var(--ov-primary)">
+                                    <i class="fas fa-star text-white" style="font-size:.8rem"></i>
+                                </div>
+                                <div class="flex-grow-1 border-start" style="width:2px;margin-top:6px;min-height:60px"></div>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                    <strong>v1.2.0</strong>
+                                    <span class="badge bg-success">Latest</span>
+                                    <span class="text-muted" style="font-size:.8rem">March 2026</span>
+                                </div>
+                                <ul class="mb-0 ps-3" style="font-size:.88rem;line-height:1.9">
+                                    <li><strong>Loyalty Points System</strong> — Guests earn &amp; redeem points across stays; Bronze / Silver / Gold / Platinum tiers with tier-specific benefits.</li>
+                                    <li><strong>Integrated Payment Modal</strong> — Single-step check-in flow: choose POS or Cash, enter reference, optionally redeem points, and confirm — all from the reservation view.</li>
+                                    <li><strong>Auto Bill Generation</strong> — Bill is automatically created at check-in and linked to the reservation; no manual trigger needed.</li>
+                                    <li><strong>Loyalty Redemption on Bills</strong> — Discount is applied as a percentage before payment is recorded; redeemed points are deducted from the guest's balance in real time.</li>
+                                    <li><strong>Reports Dashboard</strong> — New analytics dashboard with live KPIs, occupancy charts, and revenue breakdowns.</li>
+                                    <li><strong>PDF Report Export</strong> — Monthly reports can now be downloaded as PDF.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- v1.1.0 -->
+                        <div class="d-flex gap-3 mb-4">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;min-width:36px;background:#6c757d">
+                                    <i class="fas fa-code-branch text-white" style="font-size:.8rem"></i>
+                                </div>
+                                <div class="flex-grow-1 border-start" style="width:2px;margin-top:6px;min-height:40px"></div>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                    <strong>v1.1.0</strong>
+                                    <span class="text-muted" style="font-size:.8rem">February 2026</span>
+                                </div>
+                                <ul class="mb-0 ps-3" style="font-size:.88rem;line-height:1.9">
+                                    <li>Weekly &amp; Monthly report pages with charts</li>
+                                    <li>Bill discount management for managers</li>
+                                    <li>Room detail &amp; availability views</li>
+                                    <li>Customer profile with reservation history</li>
+                                    <li>Email notification templates</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- v1.0.0 -->
+                        <div class="d-flex gap-3">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;min-width:36px;background:#16a34a">
+                                    <i class="fas fa-flag text-white" style="font-size:.8rem"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                                    <strong>v1.0.0</strong>
+                                    <span class="badge bg-secondary">Initial Release</span>
+                                    <span class="text-muted" style="font-size:.8rem">January 2026</span>
+                                </div>
+                                <ul class="mb-0 ps-3" style="font-size:.88rem;line-height:1.9">
+                                    <li>Core reservation management (create, confirm, cancel)</li>
+                                    <li>Check-in / check-out workflow</li>
+                                    <li>Basic bill generation &amp; payment recording</li>
+                                    <li>Role-based access (Customer, Staff, Manager)</li>
+                                    <li>Room &amp; customer management</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FAQ Accordion -->
+                <div class="ov-card animate-in delay-2" id="sec-faq">
+                    <div class="card-body-ov">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-question-circle me-2 text-ocean"></i>Frequently Asked Questions</h5>
+                        <div id="faqList">
+
+                            <div class="ov-accordion-item" data-faq="create reservation new booking">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How do I create a new reservation?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Navigate to <strong>Reservations → New Booking</strong> from the sidebar. Fill in the guest's details, select the check-in and check-out dates, choose an available room, and click <strong>Confirm Booking</strong>. A unique reservation number is issued upon successful creation.
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="check in guest checkin">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How do I check in a guest?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Open the reservation and click <strong>Check In</strong>. A payment modal will appear — select <em>POS</em> or <em>Cash</em>, enter a payment reference number, optionally redeem loyalty points, then click <strong>Confirm Check-In</strong>. The system will automatically mark the reservation as Checked In, generate the bill, apply any point discount, and record the payment.
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="modify edit reservation change dates">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>Can I modify a reservation after it's created?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Yes. Reservations in <strong>PENDING</strong> or <strong>CONFIRMED</strong> status can be edited. Go to the reservation detail page and click <strong>Edit</strong>. You can change dates, room assignment, and guest details. Reservations that are already checked-in require manager approval to modify.
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="generate bill invoice print">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How do I generate and print a bill?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Bills are generated <strong>automatically at check-in</strong>. You can also create one manually from the reservation detail page via <strong>Bill Summary → View Full Bill</strong>. To print, open the bill and click the <strong>Print</strong> button — a print-friendly view opens automatically.
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="discount apply bill manager">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How do I apply a discount to a bill?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Managers can apply a percentage discount from the bill detail page. Enter the discount percentage in the <strong>Apply Discount</strong> section and provide a reason. The bill total recalculates immediately. Loyalty-point redemptions during check-in are converted to a discount automatically.
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="loyalty points earn redeem tier">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How does the Loyalty Points system work?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Guests accumulate loyalty points with every completed stay. Points determine their tier (Bronze → Silver → Gold → Platinum), each unlocking better discounts and perks. At check-in, staff can redeem points against the bill — <strong>1 point = LKR 0.10 discount</strong>. Use the <em>Use Max Points</em> button to apply the highest allowable redemption. Tier and balance are always visible in the payment modal.
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="payment pos cash reference method">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>What payment methods are supported?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    The system supports two payment methods at check-in:
+                                    <ul class="mb-0 mt-1">
+                                        <li><strong>POS (Card)</strong> – Enter the transaction reference from the POS terminal (e.g. <code>TXN-2026-00123</code>).</li>
+                                        <li><strong>Cash</strong> – Enter the cash receipt number issued by the front-desk cashier (e.g. <code>RCT-2026-00045</code>).</li>
+                                    </ul>
+                                    Both reference numbers are saved against the bill for audit purposes.
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="reports analytics monthly weekly dashboard">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>What reports are available?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Three report types are available under <strong>Reports</strong> in the sidebar:
+                                    <ul class="mb-0 mt-1">
+                                        <li><strong>Monthly Reports</strong> – Revenue, occupancy, and booking trends for any month. Supports PDF download.</li>
+                                        <li><strong>Weekly Reports</strong> – Short-term performance by ISO week number.</li>
+                                        <li><strong>Reports Dashboard</strong> – Live KPIs, interactive charts, and a full analytics overview.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="roles user permissions customer staff manager">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>What are the different user roles?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    <ul class="mb-0">
+                                        <li><strong>Customer</strong> – Can view and manage their own reservations, bills, and loyalty balance.</li>
+                                        <li><strong>Staff</strong> – Can manage all reservations, perform check-in/check-out, generate bills, and process payments.</li>
+                                        <li><strong>Manager</strong> – Full access: room management, discount application, reports, user management, and all Staff capabilities.</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="cancel reservation cancellation policy">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How do I cancel a reservation?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Open the reservation and click the <strong>Cancel</strong> button (visible for PENDING and CONFIRMED reservations). A confirmation prompt will appear. Once cancelled, the room becomes available again and the reservation status is updated to CANCELLED. Checked-in reservations cannot be cancelled directly — contact a manager.
+                                </div>
+                            </div>
+
+                            <div class="ov-accordion-item" data-faq="room availability status occupied">
+                                <button class="ov-accordion-btn" onclick="toggleFaq(this)">
+                                    <span>How is room availability managed?</span>
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                                <div class="ov-accordion-body">
+                                    Room status is updated automatically: a room becomes <strong>Occupied</strong> when a guest checks in, and <strong>Available</strong> again after check-out or cancellation. Staff can also change room status manually from <strong>Rooms → Room Detail</strong> (e.g. to mark it as Under Maintenance).
+                                </div>
+                            </div>
+
+                        </div>
+                        <div id="faqNoResults" class="text-muted text-center py-4 d-none">
+                            <i class="fas fa-search fa-2x mb-2 opacity-25"></i><br/>No matching topics found.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ═══════════════ RIGHT COLUMN ═══════════════ -->
+            <div class="col-lg-4">
+
+                <!-- Keyboard Shortcuts -->
+                <div class="ov-card mb-4 animate-in delay-1">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-keyboard me-2 text-ocean"></i>Keyboard Shortcuts</h6>
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span style="font-size:.9rem">Go to Dashboard</span>
+                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Alt + D</kbd>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span style="font-size:.9rem">New Reservation</span>
+                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Alt + N</kbd>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span style="font-size:.9rem">Search</span>
+                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Ctrl + K</kbd>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span style="font-size:.9rem">Toggle Sidebar</span>
+                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Alt + S</kbd>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2">
+                            <span style="font-size:.9rem">Print Current Page</span>
+                            <kbd style="background:#f1f5f9;border-radius:4px;padding:2px 8px;font-size:.8rem">Ctrl + P</kbd>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workflow status cheat-sheet -->
+                <div class="ov-card mb-4 animate-in delay-1">
+                    <div class="card-body-ov">
+                        <h6 class="fw-bold mb-3"><i class="fas fa-stream me-2 text-ocean"></i>Reservation Status Flow</h6>
+                        <div class="d-flex flex-column gap-2" style="font-size:.85rem">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-warning text-dark">PENDING</span>
+                                <i class="fas fa-arrow-right text-muted"></i>
+                                <span class="text-muted">Confirm</span>
+                                <i class="fas fa-arrow-right text-muted"></i>
+                                <span class="badge bg-primary">CONFIRMED</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-primary">CONFIRMED</span>
+                                <i class="fas fa-arrow-right text-muted"></i>
+                                <span class="text-muted">Check In</span>
+                                <i class="fas fa-arrow-right text-muted"></i>
+                                <span class="badge" style="background:var(--ov-accent)">CHECKED_IN</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge" style="background:var(--ov-accent)">CHECKED_IN</span>
+                                <i class="fas fa-arrow-right text-muted"></i>
+                                <span class="text-muted">Check Out</span>
+                                <i class="fas fa-arrow-right text-muted"></i>
+                                <span class="badge bg-secondary">CHECKED_OUT</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-warning text-dark">PENDING</span>
+                                <span class="text-muted">/</span>
+                                <span class="badge bg-primary">CONFIRMED</span>
+                                <i class="fas fa-arrow-right text-muted"></i>
+                                <span class="badge bg-danger">CANCELLED</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Need Help -->
                 <div class="ov-card mb-4 animate-in delay-2">
                     <div class="card-body-ov">
                         <h6 class="fw-bold mb-3"><i class="fas fa-headset me-2 text-ocean"></i>Need More Help?</h6>
                         <div class="mb-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-envelope text-ocean me-2"></i>
-                                <span>support@oceanviewresort.com</span>
+                            <div class="d-flex align-items-center mb-2 gap-2">
+                                <i class="fas fa-envelope text-ocean"></i>
+                                <span style="font-size:.9rem">support@oceanviewresort.com</span>
                             </div>
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="fas fa-phone text-ocean me-2"></i>
-                                <span>+44 29 2034 5678</span>
+                            <div class="d-flex align-items-center mb-2 gap-2">
+                                <i class="fas fa-phone text-ocean"></i>
+                                <span style="font-size:.9rem">+94 11 234 5678</span>
                             </div>
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-clock text-ocean me-2"></i>
-                                <span>Mon–Fri, 9:00 AM – 6:00 PM</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-clock text-ocean"></i>
+                                <span style="font-size:.9rem">Mon – Fri, 9:00 AM – 6:00 PM</span>
                             </div>
+                        </div>
+                        <div class="alert alert-warning mb-0 py-2 px-3" style="font-size:.82rem">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            For urgent issues outside office hours, contact the on-duty manager via the hotel front-desk extension.
                         </div>
                     </div>
                 </div>
@@ -199,20 +547,29 @@
                 <div class="ov-card animate-in delay-2">
                     <div class="card-body-ov">
                         <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-ocean"></i>System Info</h6>
-                        <div class="d-flex justify-content-between py-1">
-                            <span class="text-muted">Version</span><strong>1.0.0</strong>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted" style="font-size:.88rem">Version</span>
+                            <strong style="font-size:.88rem">1.2.0 <span class="badge bg-success ms-1" style="font-size:.7rem">Latest</span></strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted" style="font-size:.88rem">Framework</span>
+                            <strong style="font-size:.88rem">Spring Boot 3.2</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted" style="font-size:.88rem">Java</span>
+                            <strong style="font-size:.88rem">17+</strong>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 border-bottom">
+                            <span class="text-muted" style="font-size:.88rem">Database</span>
+                            <strong style="font-size:.88rem">MySQL 8</strong>
                         </div>
                         <div class="d-flex justify-content-between py-1">
-                            <span class="text-muted">Framework</span><strong>Spring Boot 3.2</strong>
-                        </div>
-                        <div class="d-flex justify-content-between py-1">
-                            <span class="text-muted">Java</span><strong>17+</strong>
-                        </div>
-                        <div class="d-flex justify-content-between py-1">
-                            <span class="text-muted">Database</span><strong>MySQL 8</strong>
+                            <span class="text-muted" style="font-size:.88rem">Last Updated</span>
+                            <strong style="font-size:.88rem">March 2026</strong>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -221,24 +578,48 @@
 <div th:replace="~{fragments/layout :: scripts}"></div>
 
 <script>
+/* ── FAQ accordion ── */
 function toggleFaq(btn) {
-    const item = btn.parentElement;
-    const body = item.querySelector('.ov-accordion-body');
-    const icon = btn.querySelector('i');
+    const item   = btn.parentElement;
+    const body   = item.querySelector('.ov-accordion-body');
+    const icon   = btn.querySelector('i');
     const isOpen = body.style.maxHeight && body.style.maxHeight !== '0px';
 
-    // Close all
     document.querySelectorAll('.ov-accordion-body').forEach(b => { b.style.maxHeight = '0px'; b.style.padding = '0 16px'; });
     document.querySelectorAll('.ov-accordion-btn i').forEach(i => i.style.transform = '');
 
     if (!isOpen) {
         body.style.maxHeight = body.scrollHeight + 20 + 'px';
-        body.style.padding = '12px 16px';
+        body.style.padding   = '12px 16px';
         icon.style.transform = 'rotate(180deg)';
     }
 }
 
-// Style accordion
+/* ── FAQ live search ── */
+function filterFAQ(query) {
+    const q     = query.toLowerCase().trim();
+    const items = document.querySelectorAll('#faqList .ov-accordion-item');
+    let   shown = 0;
+    items.forEach(item => {
+        const text = (item.dataset.faq || '') + ' ' + item.textContent.toLowerCase();
+        const match = !q || text.includes(q);
+        item.style.display = match ? '' : 'none';
+        if (match) shown++;
+    });
+    document.getElementById('faqNoResults').classList.toggle('d-none', shown > 0);
+
+    // Also close all open panels when filtering
+    document.querySelectorAll('.ov-accordion-body').forEach(b => { b.style.maxHeight = '0px'; b.style.padding = '0 16px'; });
+    document.querySelectorAll('.ov-accordion-btn i').forEach(i => i.style.transform = '');
+}
+
+/* ── Smooth scroll to section ── */
+function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ── Style accordion items ── */
 document.querySelectorAll('.ov-accordion-item').forEach(item => {
     const btn = item.querySelector('.ov-accordion-btn');
     btn.style.cssText = 'width:100%;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:none;background:#f8fafc;border-radius:8px;cursor:pointer;font-weight:600;font-size:.95rem;transition:.2s;margin-bottom:4px';
@@ -248,6 +629,9 @@ document.querySelectorAll('.ov-accordion-item').forEach(item => {
     const body = item.querySelector('.ov-accordion-body');
     body.style.cssText = 'max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;padding:0 16px;font-size:.9rem;line-height:1.7;color:#475569';
 });
+
+/* ── Search input placeholder colour fix ── */
+document.getElementById('helpSearch').addEventListener('focus', function() { this.style.color = '#fff'; });
 </script>
 
 </body>

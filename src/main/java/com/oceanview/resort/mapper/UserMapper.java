@@ -12,6 +12,7 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
 
     @Mapping(target = "isActive", source = "active")
+    @Mapping(target = "createdAt", source = "createdAt")
     UserDTO toDTO(User user);
 
     @Mapping(target = "password", ignore = true)

@@ -81,14 +81,18 @@ public class ReservationController {
     }
 
     /**
-     * Returns a reservation by its UUID.
+     * Returns a reservation by its UUID or reservation number.
+     * The view page passes the UUID in the path variable.
      */
     @GetMapping("/{id}")
-    @Operation(summary = "Get Reservation", description = "Get a reservation by its ID")
+    @Operation(summary = "Get Reservation", description = "Get a reservation by its UUID or reservation number")
     public ResponseEntity<ReservationDTO> getReservationById(@PathVariable String id) {
-        // Use reservation number lookup since service uses it
-        ReservationDTO reservation = reservationService.findByReservationNumber(id);
-        return ResponseEntity.ok(reservation);
+        // If it looks like a reservation number (OVR-...) use number lookup
+        if (id.startsWith("OVR-") || id.startsWith("RES-")) {
+            return ResponseEntity.ok(reservationService.findByReservationNumber(id));
+        }
+        // Otherwise it's a UUID — use direct findById to ensure billId is populated
+        return ResponseEntity.ok(reservationService.findById(id));
     }
 
     /**
@@ -132,6 +136,26 @@ public class ReservationController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Cancel Reservation", description = "Cancel a reservation")
     public ResponseEntity<Void> cancelReservation(@PathVariable String id) {
+        reservationService.cancelReservation(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Confirms a reservation (PENDING → CONFIRMED).
+     */
+    @PutMapping("/{reservationNumber}/confirm")
+    @Operation(summary = "Confirm Reservation", description = "Confirm a pending reservation")
+    public ResponseEntity<ReservationDTO> confirmReservation(@PathVariable String reservationNumber) {
+        ReservationDTO updated = reservationService.confirmReservation(reservationNumber);
+        return ResponseEntity.ok(updated);
+    }
+
+    /**
+     * Cancels a reservation via PUT (alternative to DELETE).
+     */
+    @PutMapping("/{id}/cancel")
+    @Operation(summary = "Cancel Reservation (PUT)", description = "Cancel a reservation via PUT")
+    public ResponseEntity<Void> cancelReservationPut(@PathVariable String id) {
         reservationService.cancelReservation(id);
         return ResponseEntity.noContent().build();
     }

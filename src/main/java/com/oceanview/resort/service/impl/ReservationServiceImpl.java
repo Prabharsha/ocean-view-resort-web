@@ -23,6 +23,8 @@ import com.oceanview.resort.util.ValidationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -107,11 +109,42 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setReservationNumber(reservationNumberGenerator.generateNext());
         reservation.setStatus(ReservationStatus.PENDING);
 
-        // Optionally set staff
+        // Auto-populate guestName and guestContact from the customer entity
+        // when the front-end omits these fields (they are required NOT NULL columns)
+        if (reservation.getGuestName() == null || reservation.getGuestName().isBlank()) {
+            reservation.setGuestName(customer.getFullName());
+        }
+        if (reservation.getGuestContact() == null || reservation.getGuestContact().isBlank()) {
+            reservation.setGuestContact(customer.getPhone() != null ? customer.getPhone() : "N/A");
+        }
+        // Auto-populate guestAddress from customer address when not provided
+        if (reservation.getGuestAddress() == null || reservation.getGuestAddress().isBlank()) {
+            if (customer.getAddress() != null && !customer.getAddress().isBlank()) {
+                reservation.setGuestAddress(customer.getAddress());
+            }
+        }
+
+        // Optionally set staff — if not provided, use the currently logged-in staff/manager
         if (dto.getStaffId() != null) {
             User staff = userRepository.findById(dto.getStaffId())
                     .orElseThrow(() -> new IllegalArgumentException("Staff not found: " + dto.getStaffId()));
             reservation.setStaff(staff);
+        } else {
+            // Auto-assign the currently authenticated staff/manager
+            try {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+                    userRepository.findByUsername(auth.getName()).ifPresent(loggedInUser -> {
+                        com.oceanview.resort.model.enums.UserRole role = loggedInUser.getRole();
+                        if (role == com.oceanview.resort.model.enums.UserRole.STAFF
+                                || role == com.oceanview.resort.model.enums.UserRole.MANAGER) {
+                            reservation.setStaff(loggedInUser);
+                        }
+                    });
+                }
+            } catch (Exception ex) {
+                log.warn("Could not auto-assign staff from security context: {}", ex.getMessage());
+            }
         }
 
         Reservation saved = reservationRepository.save(reservation);
@@ -137,9 +170,18 @@ public class ReservationServiceImpl implements ReservationService {
 
     /** {@inheritDoc} */
     @Override
+    public ReservationDTO findById(String id) {
+        log.debug("Finding reservation by id: {}", id);
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new ReservationNotFoundException("id", id));
+        return reservationMapper.toDTO(reservation);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public List<ReservationDTO> findAllReservations() {
         log.debug("Finding all reservations");
-        return reservationRepository.findAll().stream()
+        return reservationRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(reservationMapper::toDTO)
                 .collect(Collectors.toList());
     }
@@ -171,6 +213,26 @@ public class ReservationServiceImpl implements ReservationService {
                 .orElseThrow(() -> new ReservationNotFoundException("id", id));
         reservation.setStatus(status);
         Reservation saved = reservationRepository.save(reservation);
+        return reservationMapper.toDTO(saved);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional
+    public ReservationDTO confirmReservation(String reservationNumber) {
+        log.info("Confirming reservation: {}", reservationNumber);
+        Reservation reservation = reservationRepository.findByReservationNumber(reservationNumber)
+                .orElseThrow(() -> new ReservationNotFoundException("reservationNumber", reservationNumber));
+
+        if (reservation.getStatus() != ReservationStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Only PENDING reservations can be confirmed. Current status: " +
+                    reservation.getStatus().getDisplayName());
+        }
+
+        reservation.setStatus(ReservationStatus.CONFIRMED);
+        Reservation saved = reservationRepository.save(reservation);
+        log.info("Reservation {} confirmed", reservationNumber);
         return reservationMapper.toDTO(saved);
     }
 

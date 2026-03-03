@@ -4,6 +4,7 @@ import com.oceanview.resort.model.enums.ReservationStatus;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Data Transfer Object for Reservation entity.
@@ -44,8 +45,10 @@ public class ReservationDTO {
     private String id;
     private String reservationNumber;
     private String customerId;
+    private String customerName;
     private String roomId;
     private String staffId;
+    private String billId;
     private String guestName;
     private String guestAddress;
     private String guestContact;
@@ -56,4 +59,5 @@ public class ReservationDTO {
     private ReservationStatus status;
     private String roomNumber;
     private String roomType;
+    private LocalDateTime createdAt;
 }

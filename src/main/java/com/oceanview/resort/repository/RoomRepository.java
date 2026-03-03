@@ -20,6 +20,11 @@ import java.util.Optional;
 public interface RoomRepository extends JpaRepository<Room, String> {
 
     /**
+     * Finds all rooms ordered by creation date descending (newest first).
+     */
+    List<Room> findAllByOrderByCreatedAtDesc();
+
+    /**
      * Finds a room by its unique room number.
      */
     Optional<Room> findByRoomNumber(String roomNumber);

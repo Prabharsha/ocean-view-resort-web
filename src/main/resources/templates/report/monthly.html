@@ -129,14 +129,14 @@ function loadMonthlyReport() {
     const month = document.getElementById('monthSelect').value;
     const filtered = allReservations.filter(r => {
         const d = r.checkInDate || r.createdAt;
-        return d && d.startsWith(month);
+        return d && String(d).startsWith(month);
     });
     const monthBills = allBills.filter(b => {
-        const d = b.billDate || b.createdAt;
-        return d && d.startsWith(month);
+        const d = b.generatedAt || b.billDate || b.createdAt;
+        return d && String(d).startsWith(month);
     });
 
-    const revenue = monthBills.reduce((s, b) => s + (b.totalAmount || b.total || 0), 0);
+    const revenue = monthBills.reduce((s, b) => s + Number(b.totalAmount || 0), 0);
     const cancelled = filtered.filter(r => r.status === 'CANCELLED').length;
     const avgStay = filtered.length ? (filtered.reduce((s, r) => {
         if (r.checkInDate && r.checkOutDate) {
@@ -155,9 +155,11 @@ function loadMonthlyReport() {
     const daysInMonth = new Date(year, mon, 0).getDate();
     const dailyRev = new Array(daysInMonth).fill(0);
     monthBills.forEach(b => {
-        const d = new Date(b.billDate || b.createdAt);
+        const raw = b.generatedAt || b.billDate || b.createdAt;
+        if (!raw) return;
+        const d = new Date(raw);
         const day = d.getDate() - 1;
-        if (day >= 0 && day < daysInMonth) dailyRev[day] += (b.totalAmount || b.total || 0);
+        if (day >= 0 && day < daysInMonth) dailyRev[day] += Number(b.totalAmount || 0);
     });
 
     if (dRevChart) dRevChart.destroy();

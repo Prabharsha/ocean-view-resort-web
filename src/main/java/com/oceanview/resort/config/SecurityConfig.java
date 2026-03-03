@@ -45,53 +45,63 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // ─── Public endpoints ───
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/rooms", "/api/rooms/available",
-                        "/api/rooms/search").permitAll()
-                .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/", "/login", "/register", "/error",
-                        "/dashboard", "/reservations/**", "/rooms/**",
-                        "/bills/**", "/reports", "/reports/**",
-                        "/profile", "/help").permitAll()
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // ─── Public endpoints ───
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rooms", "/api/rooms/available",
+                                "/api/rooms/search").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/error",
+                                "/dashboard", "/reservations/**", "/rooms/**",
+                                "/bills/**", "/reports", "/reports/**",
+                                "/customers/**",
+                                "/profile", "/help").permitAll()
 
-                // ─── Reports: MANAGER only ───
-                .requestMatchers("/api/reports/**").hasRole("MANAGER")
+                        // ─── Reports: MANAGER only ───
+                        .requestMatchers("/api/reports/**").hasRole("MANAGER")
 
-                // ─── Room management: MANAGER or MAINTENANCE (write ops) ───
-                .requestMatchers(HttpMethod.POST, "/api/rooms").hasRole("MANAGER")
-                .requestMatchers(HttpMethod.PUT, "/api/rooms/**")
-                    .hasAnyRole("MANAGER", "MAINTENANCE")
-                .requestMatchers(HttpMethod.DELETE, "/api/rooms/**").hasRole("MANAGER")
+                        // ─── Room management: MANAGER or MAINTENANCE (write ops) ───
+                        .requestMatchers(HttpMethod.POST, "/api/rooms").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/rooms/**")
+                        .hasAnyRole("MANAGER", "MAINTENANCE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/rooms/**").hasRole("MANAGER")
 
-                // ─── User management: MANAGER only ───
-                .requestMatchers("/api/users/**").hasRole("MANAGER")
+                        // ─── User management: MANAGER only ───
+                        .requestMatchers("/api/users/**").hasRole("MANAGER")
 
-                // ─── Bill discount: MANAGER and STAFF ───
-                .requestMatchers(HttpMethod.POST, "/api/bills/*/discount")
-                    .hasAnyRole("MANAGER", "STAFF")
+                        // ─── Customer management: STAFF and MANAGER ───
+                        .requestMatchers(HttpMethod.GET, "/api/customers", "/api/customers/**")
+                        .hasAnyRole("STAFF", "MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/api/customers")
+                        .hasAnyRole("STAFF", "MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/customers/**")
+                        .hasAnyRole("STAFF", "MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("MANAGER")
 
-                // ─── Reservation list (all): STAFF and MANAGER ───
-                .requestMatchers(HttpMethod.GET, "/api/reservations")
-                    .hasAnyRole("STAFF", "MANAGER")
+                        // ─── Bill discount: MANAGER and STAFF ───
+                        .requestMatchers(HttpMethod.POST, "/api/bills/*/discount")
+                        .hasAnyRole("MANAGER", "STAFF")
 
-                // ─── Check-in / Check-out: STAFF and MANAGER ───
-                .requestMatchers(HttpMethod.PUT, "/api/reservations/*/checkin")
-                    .hasAnyRole("STAFF", "MANAGER")
-                .requestMatchers(HttpMethod.PUT, "/api/reservations/*/checkout")
-                    .hasAnyRole("STAFF", "MANAGER")
+                        // ─── Reservation list (all): STAFF and MANAGER ───
+                        .requestMatchers(HttpMethod.GET, "/api/reservations")
+                        .hasAnyRole("STAFF", "MANAGER")
 
-                // ─── All remaining endpoints require authentication ───
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtAuthenticationFilter,
-                    UsernamePasswordAuthenticationFilter.class);
+                        // ─── Check-in / Check-out: STAFF and MANAGER ───
+                        .requestMatchers(HttpMethod.PUT, "/api/reservations/*/checkin")
+                        .hasAnyRole("STAFF", "MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/api/reservations/*/checkout")
+                        .hasAnyRole("STAFF", "MANAGER")
+
+                        // ─── All remaining endpoints require authentication ───
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

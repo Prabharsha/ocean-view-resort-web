@@ -84,7 +84,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDTO> findAllUsers() {
         log.debug("Finding all users");
-        return userRepository.findAll().stream()
+        return userRepository.findAllByOrderByCreatedAtDesc().stream()
                 .map(userMapper::toDTO)
                 .collect(Collectors.toList());
     }

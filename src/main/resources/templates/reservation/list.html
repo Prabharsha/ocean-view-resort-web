@@ -24,8 +24,36 @@
             </a>
         </div>
 
+        <!-- Summary Stats -->
+        <div class="row g-3 mb-4 animate-in delay-1">
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card blue">
+                    <div class="stat-label">Total</div>
+                    <div class="stat-value" id="totalCount">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card gold">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value" id="pendingCount">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card green">
+                    <div class="stat-label">Checked In</div>
+                    <div class="stat-value" id="checkedInCount">0</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card danger">
+                    <div class="stat-label">Cancelled</div>
+                    <div class="stat-value" id="cancelledCount">0</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Filter Bar -->
-        <div class="ov-card mb-4 animate-in delay-1">
+        <div class="ov-card mb-4 animate-in delay-2">
             <div class="card-body-ov">
                 <div class="filter-bar mb-0">
                     <div class="search-box">
@@ -54,7 +82,7 @@
         </div>
 
         <!-- Reservations Table -->
-        <div class="ov-card animate-in delay-2">
+        <div class="ov-card animate-in delay-3">
             <div class="card-body-ov p-0">
                 <div class="table-responsive">
                     <table class="ov-table">
@@ -84,32 +112,129 @@
 
         <!-- Pagination -->
         <div class="mt-3" id="pagination"></div>
+    </div>
+</div>
 
-        <!-- Summary Stats -->
-        <div class="row g-3 mt-3 animate-in delay-3">
-            <div class="col-sm-6 col-lg-3">
-                <div class="stat-card blue">
-                    <div class="stat-label">Total</div>
-                    <div class="stat-value" id="totalCount">0</div>
+<!-- ── Payment Modal (Check-In) ─────────────────────────── -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" style="border-radius:1rem;border:none">
+            <div class="modal-header" style="background:var(--ov-primary);border-radius:1rem 1rem 0 0">
+                <h5 class="modal-title text-white fw-bold" id="paymentModalLabel">
+                    <i class="fas fa-cash-register me-2"></i>Process Check-In Payment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Reservation summary -->
+                <div class="p-3 rounded-3 mb-4" style="background:var(--ov-sand)">
+                    <div class="row g-2 text-center">
+                        <div class="col-6 col-md-3">
+                            <div class="text-muted" style="font-size:.75rem">RESERVATION #</div>
+                            <div class="fw-bold" id="pm-resNum">—</div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-muted" style="font-size:.75rem">GUEST</div>
+                            <div class="fw-bold" id="pm-guest">—</div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-muted" style="font-size:.75rem">ROOM</div>
+                            <div class="fw-bold" id="pm-room">—</div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="text-muted" style="font-size:.75rem">TOTAL DUE</div>
+                            <div class="fw-bold text-primary" id="pm-total">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <!-- Payment method selector -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Payment Method</label>
+                            <div class="d-flex gap-2">
+                                <div class="flex-1 w-50">
+                                    <input type="radio" class="btn-check" name="payMethod" id="pm-pos" value="POS" checked onchange="togglePaymentFields()">
+                                    <label class="btn btn-outline-primary w-100" for="pm-pos">
+                                        <i class="fas fa-credit-card me-2"></i>POS
+                                    </label>
+                                </div>
+                                <div class="flex-1 w-50">
+                                    <input type="radio" class="btn-check" name="payMethod" id="pm-cash" value="CASH" onchange="togglePaymentFields()">
+                                    <label class="btn btn-outline-success w-100" for="pm-cash">
+                                        <i class="fas fa-money-bill-wave me-2"></i>Cash
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- POS: reference number -->
+                        <div class="mb-3" id="pm-pos-group">
+                            <label class="form-label fw-semibold">POS Transaction Reference</label>
+                            <input type="text" class="form-control ov-input" id="pm-pos-ref"
+                                   placeholder="e.g. TXN-2026-00123" style="font-family:monospace"/>
+                            <div class="form-text">Reference number on the POS terminal receipt.</div>
+                        </div>
+                        <!-- Cash: receipt reference -->
+                        <div class="mb-3 d-none" id="pm-cash-group">
+                            <label class="form-label fw-semibold">Cash Receipt Reference</label>
+                            <input type="text" class="form-control ov-input" id="pm-cash-ref"
+                                   placeholder="e.g. RCT-2026-00045" style="font-family:monospace"/>
+                            <div class="form-text">Receipt number issued by front desk cashier.</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <!-- Loyalty Points Redemption -->
+                        <div class="p-3 rounded-3 h-100 d-flex flex-column" style="background:#fff8e1;border:1.5px solid #ffe082">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="fas fa-star text-warning fa-lg"></i>
+                                <span class="fw-bold">Redeem Loyalty Points</span>
+                                <span id="pm-loyalty-loading" class="spinner-border spinner-border-sm text-warning ms-auto d-none"></span>
+                            </div>
+                            <div id="pm-loyalty-unavailable" class="text-muted small d-none">
+                                Loyalty points not available for this reservation.
+                            </div>
+                            <div id="pm-loyalty-section">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="text-muted small">Available Balance</span>
+                                    <strong id="pm-loyalty-balance" class="text-warning">0 pts</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted small">Tier</span>
+                                    <span id="pm-loyalty-tier" class="badge bg-warning text-dark">—</span>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold mb-1">Points to Redeem <span class="text-muted fw-normal">(1 pt = LKR 0.10)</span></label>
+                                    <input type="number" class="form-control form-control-sm ov-input" id="pm-redeem-pts"
+                                           min="0" value="0" placeholder="0" oninput="updatePointsPreview()"/>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                    <span class="text-muted small">Points Discount</span>
+                                    <strong class="text-success" id="pm-pts-discount">LKR 0.00</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold small">Remaining to Pay</span>
+                                    <strong class="text-primary" id="pm-remaining">—</strong>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-warning w-100 mt-2" onclick="applyMaxPoints()">
+                                    <i class="fas fa-bolt me-1"></i>Use Max Points
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info d-flex align-items-center gap-2 mt-3 mb-0" style="font-size:.85rem">
+                    <i class="fas fa-info-circle fa-lg"></i>
+                    <span>Confirming will mark this reservation as <strong>Checked In</strong>, generate a bill, and record the payment.</span>
                 </div>
             </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="stat-card gold">
-                    <div class="stat-label">Pending</div>
-                    <div class="stat-value" id="pendingCount">0</div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="stat-card green">
-                    <div class="stat-label">Checked In</div>
-                    <div class="stat-value" id="checkedInCount">0</div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-lg-3">
-                <div class="stat-card danger">
-                    <div class="stat-label">Cancelled</div>
-                    <div class="stat-value" id="cancelledCount">0</div>
-                </div>
+            <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success fw-semibold px-4" id="pm-confirm-btn" onclick="confirmCheckin()">
+                    <i class="fas fa-sign-in-alt me-2"></i>Confirm Check-In
+                </button>
             </div>
         </div>
     </div>
@@ -121,8 +246,21 @@
 let allReservations = [];
 let currentPage = 0;
 const PAGE_SIZE = 10;
+let pendingCheckinResNum = null;   // reservation number waiting for payment confirmation
 
 document.addEventListener('DOMContentLoaded', loadReservations);
+
+// Reset the confirm button whenever the payment modal is closed for any reason
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('paymentModal').addEventListener('hidden.bs.modal', () => {
+        const btn = document.getElementById('pm-confirm-btn');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Confirm Check-In';
+        pendingCheckinResNum = null;
+        pendingCheckinResId  = null;
+        pmCustomerId         = null;
+    });
+});
 
 async function loadReservations() {
     try {
@@ -154,13 +292,14 @@ function filterReservations() {
     let filtered = allReservations.filter(r => {
         const matchSearch = !search ||
             (r.reservationNumber || '').toLowerCase().includes(search) ||
+            (r.guestName || '').toLowerCase().includes(search) ||
             (r.customerName || '').toLowerCase().includes(search);
         const matchStatus = !status || r.status === status;
         return matchSearch && matchStatus;
     });
 
-    if (sort === 'newest') filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
-    else if (sort === 'oldest') filtered.sort((a, b) => (a.id || 0) - (b.id || 0));
+    if (sort === 'newest') filtered.sort((a, b) => new Date(b.createdAt || b.checkInDate) - new Date(a.createdAt || a.checkInDate));
+    else if (sort === 'oldest') filtered.sort((a, b) => new Date(a.createdAt || a.checkInDate) - new Date(b.createdAt || b.checkInDate));
     else if (sort === 'checkin') filtered.sort((a, b) => new Date(a.checkInDate) - new Date(b.checkInDate));
 
     currentPage = 0;
@@ -178,20 +317,20 @@ function renderPage(data) {
         tbody.innerHTML = page.map(r => `
             <tr>
                 <td><a href="${CTX}/reservations/view/${r.id}" class="fw-semibold text-primary">${r.reservationNumber || '—'}</a></td>
-                <td>${r.customerName || 'Guest #' + (r.customerId || '')}</td>
+                <td>${r.guestName || r.customerName || 'Guest #' + (r.customerId || '')}</td>
                 <td>${r.roomNumber || r.roomId || '—'}</td>
                 <td>${formatDate(r.checkInDate)}</td>
                 <td>${formatDate(r.checkOutDate)}</td>
-                <td><i class="fas fa-user me-1 text-muted"></i>${r.numberOfGuests || 1}</td>
+                <td><i class="fas fa-user me-1 text-muted"></i>${r.numGuests || r.numberOfGuests || 1}</td>
                 <td>${statusBadge(r.status)}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         <a href="${CTX}/reservations/view/${r.id}" class="btn btn-outline-primary" title="View">
                             <i class="fas fa-eye"></i>
                         </a>
-                        ${r.status === 'CONFIRMED' ? `<button class="btn btn-outline-success" title="Check In" onclick="checkin(${r.id})"><i class="fas fa-sign-in-alt"></i></button>` : ''}
-                        ${r.status === 'CHECKED_IN' ? `<button class="btn btn-outline-warning" title="Check Out" onclick="checkout(${r.id})"><i class="fas fa-sign-out-alt"></i></button>` : ''}
-                        ${r.status === 'PENDING' ? `<button class="btn btn-outline-danger" title="Cancel" onclick="cancelRes(${r.id})"><i class="fas fa-times"></i></button>` : ''}
+                        ${r.status === 'CONFIRMED' ? `<button class="btn btn-outline-success" title="Check In" onclick="openCheckinModal('${r.reservationNumber}','${r.id}','${r.guestName || r.customerName || ''}','${r.roomNumber || r.roomId || ''}','${r.checkInDate || ''}','${r.customerId || ''}')"><i class="fas fa-sign-in-alt"></i></button>` : ''}
+                        ${r.status === 'CHECKED_IN' ? `<button class="btn btn-outline-warning" title="Check Out" onclick="checkout('${r.reservationNumber}')"><i class="fas fa-sign-out-alt"></i></button>` : ''}
+                        ${(r.status === 'PENDING' || r.status === 'CONFIRMED') ? `<button class="btn btn-outline-danger" title="Cancel" onclick="cancelRes('${r.id}')"><i class="fas fa-times"></i></button>` : ''}
                     </div>
                 </td>
             </tr>`).join('');
@@ -201,16 +340,196 @@ function renderPage(data) {
     buildPagination('pagination', currentPage, totalPages, p => { currentPage = p; renderPage(data); });
 }
 
-async function checkin(id) {
-    if (!await confirmAction('Confirm check-in for this reservation?')) return;
-    const res = await api(`/api/reservations/${id}/checkin`, { method: 'PUT' });
-    if (res?.ok) { showToast('Check-in successful', 'success'); loadReservations(); }
-    else showToast('Check-in failed', 'error');
+/* ── Payment Modal ─────────────────────────────── */
+let pendingCheckinResId = null;   // reservation UUID (for billing)
+let pmBillTotal = 0;              // total bill amount
+let pmCustomerId = null;          // customer UUID for loyalty
+let pmLoyaltyBalance = 0;         // available loyalty points
+
+function openCheckinModal(resNum, resId, guestName, room, checkIn, customerId) {
+    pendingCheckinResNum = resNum;
+    pendingCheckinResId  = resId;
+    pmCustomerId         = customerId || null;
+    pmBillTotal          = 0;
+    pmLoyaltyBalance     = 0;
+
+    document.getElementById('pm-resNum').textContent  = resNum || '—';
+    document.getElementById('pm-guest').textContent   = guestName || '—';
+    document.getElementById('pm-room').textContent    = room || '—';
+    document.getElementById('pm-total').textContent   = '—';
+
+    // Reset fields
+    document.getElementById('pm-pos').checked = true;
+    document.getElementById('pm-pos-ref').value  = '';
+    document.getElementById('pm-cash-ref').value = '';
+    document.getElementById('pm-redeem-pts').value = '0';
+    document.getElementById('pm-pts-discount').textContent = 'LKR 0.00';
+    document.getElementById('pm-remaining').textContent = '—';
+    document.getElementById('pm-loyalty-balance').textContent = '0 pts';
+    document.getElementById('pm-loyalty-tier').textContent = '—';
+    document.getElementById('pm-pos-group').classList.remove('d-none');
+    document.getElementById('pm-cash-group').classList.add('d-none');
+    document.getElementById('pm-loyalty-unavailable').classList.add('d-none');
+    document.getElementById('pm-loyalty-section').style.opacity = '0.5';
+
+    new bootstrap.Modal(document.getElementById('paymentModal')).show();
+
+    // Fetch bill estimate + loyalty balance in parallel
+    loadModalData(resId, customerId);
 }
 
-async function checkout(id) {
+async function loadModalData(resId, customerId) {
+    document.getElementById('pm-loyalty-loading').classList.remove('d-none');
+    try {
+        // Try to get existing bill or estimate total from reservation data
+        const r = allReservations.find(x => x.id === resId);
+        if (r) {
+            // Estimate: nights × rate — we'll get exact from bill after generation
+            // For now show a preview using existing bill if available
+        }
+
+        // Fetch loyalty balance if customerId is available
+        if (customerId) {
+            const loyalRes = await api(`/api/loyalty/balance/${customerId}`);
+            if (loyalRes?.ok) {
+                const loyalty = await loyalRes.json();
+                pmLoyaltyBalance = loyalty.balance || 0;
+                document.getElementById('pm-loyalty-balance').textContent = pmLoyaltyBalance.toLocaleString() + ' pts';
+                document.getElementById('pm-loyalty-tier').textContent = loyalty.tierDisplayName || '—';
+                document.getElementById('pm-redeem-pts').max = pmLoyaltyBalance;
+                document.getElementById('pm-loyalty-section').style.opacity = '1';
+            } else {
+                document.getElementById('pm-loyalty-unavailable').classList.remove('d-none');
+                document.getElementById('pm-loyalty-section').classList.add('d-none');
+            }
+        } else {
+            document.getElementById('pm-loyalty-unavailable').classList.remove('d-none');
+        }
+    } catch (ex) {
+        document.getElementById('pm-loyalty-unavailable').classList.remove('d-none');
+    } finally {
+        document.getElementById('pm-loyalty-loading').classList.add('d-none');
+    }
+}
+
+function updatePointsPreview() {
+    const pts = Math.max(0, Math.min(parseInt(document.getElementById('pm-redeem-pts').value) || 0, pmLoyaltyBalance));
+    document.getElementById('pm-redeem-pts').value = pts;
+    const discount = pts * 0.10;
+    const remaining = Math.max(0, pmBillTotal - discount);
+    document.getElementById('pm-pts-discount').textContent = 'LKR ' + discount.toFixed(2);
+    document.getElementById('pm-remaining').textContent = pmBillTotal > 0 ? 'LKR ' + remaining.toFixed(2) : '—';
+}
+
+function applyMaxPoints() {
+    if (!pmLoyaltyBalance) return;
+    // Max points that can cover up to 100% of bill (if bill total known), else all balance
+    const maxByBill = pmBillTotal > 0 ? Math.floor(pmBillTotal / 0.10) : pmLoyaltyBalance;
+    const pts = Math.min(pmLoyaltyBalance, maxByBill);
+    document.getElementById('pm-redeem-pts').value = pts;
+    updatePointsPreview();
+}
+
+function togglePaymentFields() {
+    const isPOS = document.getElementById('pm-pos').checked;
+    document.getElementById('pm-pos-group').classList.toggle('d-none', !isPOS);
+    document.getElementById('pm-cash-group').classList.toggle('d-none', isPOS);
+}
+
+async function confirmCheckin() {
+    if (!pendingCheckinResNum) return;
+    const isPOS  = document.getElementById('pm-pos').checked;
+    const refVal = isPOS
+        ? document.getElementById('pm-pos-ref').value.trim()
+        : document.getElementById('pm-cash-ref').value.trim();
+
+    if (!refVal) {
+        showToast('Please enter a payment reference number', 'warning');
+        return;
+    }
+
+    const redeemPts = Math.max(0, Math.min(
+        parseInt(document.getElementById('pm-redeem-pts').value) || 0,
+        pmLoyaltyBalance
+    ));
+
+    const btn = document.getElementById('pm-confirm-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...';
+
+    let success = false;
+    try {
+        // Step 1: Check in the reservation
+        const checkinRes = await api(`/api/reservations/${pendingCheckinResNum}/checkin`, { method: 'PUT' });
+        if (!checkinRes?.ok) {
+            const err = await checkinRes.json().catch(() => ({}));
+            showToast(err.message || 'Check-in failed', 'error');
+            return;
+        }
+
+        // Step 2: Generate (or retrieve existing) bill
+        const billRes = await api(`/api/bills/generate/${pendingCheckinResId}`, { method: 'POST' });
+        if (!billRes?.ok) {
+            showToast('Check-in done but bill generation failed', 'warning');
+            bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            loadReservations();
+            success = true;
+            return;
+        }
+        const bill = await billRes.json();
+        pmBillTotal = Number(bill.totalAmount) || 0;
+
+        // Step 3: Apply loyalty points discount if any
+        if (redeemPts > 0 && pmCustomerId) {
+            const discountPct = Math.min(100, (redeemPts * 0.10 / pmBillTotal) * 100);
+            await api(`/api/bills/${bill.id}/discount`, {
+                method: 'POST',
+                body: { discountPercent: discountPct.toFixed(2) }
+            });
+            await api(`/api/loyalty/redeem?customerId=${pmCustomerId}&points=${redeemPts}&description=Redeemed at check-in for ${pendingCheckinResNum}`, { method: 'POST' });
+            pmBillTotal = Math.max(0, pmBillTotal - redeemPts * 0.10);
+        }
+
+        // Step 4: Record the payment
+        const payMethod = isPOS ? 'CARD' : 'CASH';
+        const payRes = await api(`/api/bills/${bill.id}/pay`, {
+            method: 'PUT',
+            body: {
+                amountPaid: pmBillTotal,
+                paymentMethod: payMethod,
+                transactionReference: refVal,
+                notes: `${isPOS ? 'POS' : 'Cash'} payment at check-in. Ref: ${refVal}${redeemPts > 0 ? `. Loyalty pts redeemed: ${redeemPts}` : ''}`
+            }
+        });
+
+        success = true;
+        bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+        if (payRes?.ok) {
+            showToast(`Check-in complete! Bill created & payment recorded${redeemPts > 0 ? ` (${redeemPts} pts redeemed)` : ''}. Ref: ${refVal}`, 'success');
+        } else {
+            showToast('Check-in done. Bill created but payment recording failed.', 'warning');
+        }
+        loadReservations();
+
+    } catch (ex) {
+        showToast('Error: ' + ex.message, 'error');
+    } finally {
+        // Only restore button if we're staying on the modal (error case)
+        if (!success) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Confirm Check-In';
+        }
+        if (success) {
+            pendingCheckinResNum = null;
+            pendingCheckinResId  = null;
+            pmCustomerId         = null;
+        }
+    }
+}
+
+async function checkout(reservationNumber) {
     if (!await confirmAction('Confirm check-out for this reservation?')) return;
-    const res = await api(`/api/reservations/${id}/checkout`, { method: 'PUT' });
+    const res = await api(`/api/reservations/${reservationNumber}/checkout`, { method: 'PUT' });
     if (res?.ok) { showToast('Check-out successful', 'success'); loadReservations(); }
     else showToast('Check-out failed', 'error');
 }

@@ -36,6 +36,11 @@ public interface UserRepository extends JpaRepository<User, String> {
     boolean existsByEmail(String email);
 
     /**
+     * Finds all users ordered by creation date descending (newest first).
+     */
+    List<User> findAllByOrderByCreatedAtDesc();
+
+    /**
      * Finds all users with a specific role.
      */
     List<User> findByRole(UserRole role);
