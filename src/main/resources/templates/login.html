@@ -138,11 +138,19 @@ async function handleLogin(e) {
 
         if (res.ok) {
             const data = await res.json();
+            const u = data.user || {};
             OVAuth.save({
                 accessToken: data.accessToken,
                 refreshToken: data.refreshToken,
-                user: { username: data.username, role: data.role,
-                        firstName: data.firstName, lastName: data.lastName, userId: data.userId }
+                user: {
+                    userId:    u.id       || '',
+                    username:  u.username || '',
+                    firstName: u.firstName|| '',
+                    lastName:  u.lastName || '',
+                    email:     u.email    || '',
+                    phone:     u.phone    || '',
+                    role:      u.role     || ''
+                }
             });
             showToast('Login successful! Redirecting...', 'success');
             setTimeout(() => window.location.href = CTX + '/dashboard', 600);
