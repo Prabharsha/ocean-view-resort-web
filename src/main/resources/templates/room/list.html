@@ -139,6 +139,8 @@
                         <label class="form-label fw-semibold">Floor Number</label>
                         <input type="number" class="form-control ov-input" id="newRoomFloor" min="1" value="1" required/>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Rate per Night (LKR)</label>
                         <input type="number" class="form-control ov-input" id="newRoomRate" step="0.01" min="0" required/>
                     </div>
                     <div class="mb-3">
@@ -163,6 +165,39 @@
 <script>
 let rooms = [];
 let viewMode = 'grid';
+
+// Amenity name → FA icon mapping (shared)
+const AMENITY_ICONS = {
+    'wifi':'fa-wifi','wi-fi':'fa-wifi','tv':'fa-tv','air conditioning':'fa-snowflake',
+    'hot water':'fa-hot-tub','bathtub':'fa-bath','jacuzzi':'fa-hot-tub',
+    'shower':'fa-shower','mini bar':'fa-wine-glass','balcony':'fa-door-open',
+    'rooftop':'fa-building','kitchenette':'fa-utensils','kitchen':'fa-utensils',
+    'butler':'fa-user-tie','sofa bed':'fa-couch','crib':'fa-baby',
+    'private pool':'fa-swimming-pool','pool':'fa-swimming-pool',
+    'phone':'fa-phone','ocean view':'fa-water','coffee':'fa-coffee',
+    'kettle':'fa-coffee','iron':'fa-tshirt','hair dryer':'fa-wind',
+};
+function getAmenityIcon(name) {
+    const l = name.toLowerCase().trim();
+    for (const [k,v] of Object.entries(AMENITY_ICONS)) { if (l.includes(k)) return v; }
+    return 'fa-check-circle';
+}
+function parseAmenities(str) {
+    if (!str) return [];
+    try { const p = typeof str === 'string' ? JSON.parse(str) : str; return Array.isArray(p) ? p : []; }
+    catch(e) { return []; }
+}
+function amenityPills(amenitiesStr, max = 4) {
+    const list = parseAmenities(amenitiesStr);
+    if (!list.length) return '';
+    const shown = list.slice(0, max);
+    const extra = list.length - shown.length;
+    return `<div class="d-flex flex-wrap gap-1 mt-2">
+        ${shown.map(n => `<span class="badge rounded-pill" style="background:var(--ov-primary-light);color:var(--ov-primary);font-size:.68rem;font-weight:500">
+            <i class="fas ${getAmenityIcon(n)} me-1" style="font-size:.6rem"></i>${n}</span>`).join('')}
+        ${extra > 0 ? `<span class="badge rounded-pill bg-light text-muted" style="font-size:.68rem">+${extra} more</span>` : ''}
+    </div>`;
+}
 
 document.addEventListener('DOMContentLoaded', loadRooms);
 
@@ -244,8 +279,9 @@ function renderRooms(list) {
                         ${roomTypeBadge(t)}
                         <div class="room-features">
                             <span><i class="fas fa-users"></i> ${r.capacity || 2}</span>
-                            <span><i class="fas fa-bed"></i> ${t}</span>
+                            <span><i class="fas fa-layer-group"></i> Floor ${r.floorNumber || '—'}</span>
                         </div>
+                        ${amenityPills(r.amenities)}
                         <div class="d-flex gap-2 mt-2">
                             <a href="${CTX}/rooms/${r.id}" class="btn btn-sm btn-outline-ocean flex-grow-1">Details</a>
                             <button class="btn btn-sm btn-outline-danger" data-role="MANAGER"

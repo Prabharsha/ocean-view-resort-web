@@ -151,6 +151,39 @@
 let allRooms = [];
 let selectedRoom = null;
 
+// Amenity icon helper
+const AMENITY_ICONS = {
+    'wifi':'fa-wifi','wi-fi':'fa-wifi','tv':'fa-tv','air conditioning':'fa-snowflake',
+    'hot water':'fa-hot-tub','bathtub':'fa-bath','jacuzzi':'fa-hot-tub',
+    'shower':'fa-shower','mini bar':'fa-wine-glass','balcony':'fa-door-open',
+    'rooftop':'fa-building','kitchenette':'fa-utensils','kitchen':'fa-utensils',
+    'butler':'fa-user-tie','sofa bed':'fa-couch','crib':'fa-baby',
+    'private pool':'fa-swimming-pool','pool':'fa-swimming-pool',
+    'phone':'fa-phone','ocean view':'fa-water','coffee':'fa-coffee',
+    'kettle':'fa-coffee','iron':'fa-tshirt','hair dryer':'fa-wind',
+};
+function getAmenityIcon(name) {
+    const l = name.toLowerCase().trim();
+    for (const [k,v] of Object.entries(AMENITY_ICONS)) { if (l.includes(k)) return v; }
+    return 'fa-check-circle';
+}
+function parseAmenities(str) {
+    if (!str) return [];
+    try { const p = typeof str === 'string' ? JSON.parse(str) : str; return Array.isArray(p) ? p : []; }
+    catch(e) { return []; }
+}
+function amenityPills(amenitiesStr, max = 4) {
+    const list = parseAmenities(amenitiesStr);
+    if (!list.length) return '';
+    const shown = list.slice(0, max);
+    const extra = list.length - shown.length;
+    return `<div class="d-flex flex-wrap gap-1 mt-2">
+        ${shown.map(n => `<span class="badge rounded-pill" style="background:var(--ov-primary-light);color:var(--ov-primary);font-size:.65rem;font-weight:500">
+            <i class="fas ${getAmenityIcon(n)} me-1" style="font-size:.58rem"></i>${n}</span>`).join('')}
+        ${extra > 0 ? `<span class="badge rounded-pill bg-light text-muted" style="font-size:.65rem">+${extra} more</span>` : ''}
+    </div>`;
+}
+
 // Set min date to today
 document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
@@ -235,8 +268,9 @@ function renderRooms(rooms) {
                     <div>${roomTypeBadge(r.roomType)}</div>
                     <div class="room-features">
                         <span><i class="fas fa-users"></i> ${r.capacity || 2} guests</span>
-                        <span><i class="fas fa-expand"></i> ${r.size || '30'}m²</span>
+                        <span><i class="fas fa-layer-group"></i> Floor ${r.floorNumber || '—'}</span>
                     </div>
+                    ${amenityPills(r.amenities, 3)}
                     <div class="mt-2 text-muted" style="font-size:.82rem">${r.description || 'Comfortable room with ocean views'}</div>
                 </div>
             </div>

@@ -166,9 +166,12 @@
                             <option value="STANDARD">Standard</option>
                             <option value="DELUXE">Deluxe</option>
                             <option value="SUITE">Suite</option>
-                            <option value="PRESIDENTIAL">Presidential</option>
-                            <option value="FAMILY">Family</option>
+                            <option value="PENTHOUSE">Penthouse</option>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Floor Number</label>
+                        <input type="number" class="form-control ov-input" id="editRoomFloor" min="1" required/>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Rate per Night (LKR)</label>
@@ -196,13 +199,70 @@
 <script>
 let room = null;
 const roomId = window.location.pathname.replace(CTX, '').replace('/rooms/', '');
-const amenityMap = {
-    STANDARD:      ['fa-wifi|Wi-Fi','fa-tv|Smart TV','fa-snowflake|AC','fa-phone|Phone','fa-coffee|Kettle'],
-    DELUXE:        ['fa-wifi|Wi-Fi','fa-tv|Smart TV','fa-snowflake|AC','fa-phone|Phone','fa-coffee|Mini Bar','fa-bath|Bathtub'],
-    SUITE:         ['fa-wifi|Wi-Fi','fa-tv|65" Smart TV','fa-snowflake|Climate Control','fa-phone|Phone','fa-wine-glass|Mini Bar','fa-bath|Rain Shower','fa-couch|Living Area','fa-utensils|Room Service'],
-    PRESIDENTIAL:  ['fa-wifi|High-Speed Wi-Fi','fa-tv|75" Smart TV','fa-snowflake|Climate Control','fa-phone|Direct Line','fa-wine-glass|Premium Bar','fa-bath|Jacuzzi','fa-couch|Living Room','fa-utensils|24h Service','fa-dumbbell|Gym Access','fa-swimmer|Pool Access'],
-    FAMILY:        ['fa-wifi|Wi-Fi','fa-tv|Smart TV','fa-snowflake|AC','fa-phone|Phone','fa-baby|Crib Available','fa-gamepad|Game Corner']
+
+// Maps amenity name keywords → FontAwesome icon class
+const AMENITY_ICONS = {
+    'wifi':          'fa-wifi',
+    'wi-fi':         'fa-wifi',
+    'tv':            'fa-tv',
+    'television':    'fa-tv',
+    'air conditioning': 'fa-snowflake',
+    'ac':            'fa-snowflake',
+    'climate':       'fa-snowflake',
+    'hot water':     'fa-hot-tub',
+    'bathtub':       'fa-bath',
+    'jacuzzi':       'fa-hot-tub',
+    'rain shower':   'fa-shower',
+    'shower':        'fa-shower',
+    'mini bar':      'fa-wine-glass',
+    'mini-bar':      'fa-wine-glass',
+    'bar':           'fa-wine-glass',
+    'balcony':       'fa-door-open',
+    'rooftop':       'fa-building',
+    'rooftop terrace':'fa-building',
+    'kitchenette':   'fa-utensils',
+    'kitchen':       'fa-utensils',
+    'room service':  'fa-concierge-bell',
+    'butler':        'fa-user-tie',
+    'butler service':'fa-user-tie',
+    'sofa bed':      'fa-couch',
+    'living area':   'fa-couch',
+    'living room':   'fa-couch',
+    'crib':          'fa-baby',
+    'pool':          'fa-swimming-pool',
+    'private pool':  'fa-swimming-pool',
+    'gym':           'fa-dumbbell',
+    'phone':         'fa-phone',
+    'safe':          'fa-lock',
+    'parking':       'fa-parking',
+    'ocean view':    'fa-water',
+    'sea view':      'fa-water',
+    'view':          'fa-eye',
+    'coffee':        'fa-coffee',
+    'kettle':        'fa-coffee',
+    'iron':          'fa-tshirt',
+    'hairdryer':     'fa-wind',
+    'hair dryer':    'fa-wind',
+    'newspaper':     'fa-newspaper',
+    'game':          'fa-gamepad',
+    'fireplace':     'fa-fire',
 };
+
+function getAmenityIcon(name) {
+    const lower = name.toLowerCase().trim();
+    for (const [key, icon] of Object.entries(AMENITY_ICONS)) {
+        if (lower.includes(key)) return icon;
+    }
+    return 'fa-check-circle';
+}
+
+function parseAmenities(amenitiesStr) {
+    if (!amenitiesStr) return [];
+    try {
+        const parsed = typeof amenitiesStr === 'string' ? JSON.parse(amenitiesStr) : amenitiesStr;
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) { return []; }
+}
 
 document.addEventListener('DOMContentLoaded', loadRoom);
 
@@ -225,30 +285,41 @@ async function loadRoom() {
 }
 
 function renderRoom() {
-    const icons = { STANDARD:'bed', DELUXE:'gem', SUITE:'crown', PRESIDENTIAL:'star', FAMILY:'users' };
-    const t = room.roomType || room.type || 'STANDARD';
-    const rate = room.pricePerNight || room.ratePerNight || 0;
+    const icons = { STANDARD:'bed', DELUXE:'gem', SUITE:'crown', PENTHOUSE:'star' };
+    const t = room.roomType || 'STANDARD';
+    const rate = room.ratePerNight || 0;
 
     document.getElementById('heroIcon').className = `fas fa-${icons[t]||'bed'}`;
     document.getElementById('heroIcon').style.fontSize = '4rem';
     document.getElementById('heroPrice').textContent = formatCurrency(rate) + ' / night';
     document.getElementById('roomTitle').textContent = `Room ${room.roomNumber || room.id}`;
-    document.getElementById('roomStatus').className = `badge-status ${room.available !== false ? 'badge-confirmed' : 'badge-cancelled'}`;
-    document.getElementById('roomStatus').textContent = room.available !== false ? 'AVAILABLE' : 'OCCUPIED';
+    document.getElementById('roomStatus').className = `badge-status ${room.available ? 'badge-confirmed' : 'badge-cancelled'}`;
+    document.getElementById('roomStatus').textContent = room.available ? 'AVAILABLE' : 'OCCUPIED';
     document.getElementById('roomTypeBadge').innerHTML = roomTypeBadge(t);
-    document.getElementById('roomDesc').textContent = room.description || 'Experience comfort and luxury in this beautifully furnished room with stunning ocean views.';
-    document.getElementById('roomCapacity').textContent = room.maxOccupancy || room.capacity || 2;
+    document.getElementById('roomDesc').textContent = room.description || 'Experience comfort and luxury in this beautifully furnished room.';
+    document.getElementById('roomCapacity').textContent = room.capacity || 2;
     document.getElementById('roomRate').textContent = formatCurrency(rate);
-    document.getElementById('roomFloor').textContent = room.floor || (room.roomNumber ? room.roomNumber.charAt(0) : '—');
+    document.getElementById('roomFloor').textContent = room.floorNumber || '—';
     document.getElementById('priceStandard').textContent = formatCurrency(rate);
     document.getElementById('priceWeekly').textContent = formatCurrency(rate * 7 * 0.95);
 
-    // Amenities
-    const amenities = amenityMap[t] || amenityMap['STANDARD'];
-    document.getElementById('amenitiesList').innerHTML = amenities.map(a => {
-        const [icon, name] = a.split('|');
-        return `<div class="col-6 col-md-4"><div class="d-flex align-items-center p-2 rounded-3" style="background:var(--ov-primary-light)"><i class="fas ${icon} text-ocean me-2"></i><small>${name}</small></div></div>`;
-    }).join('');
+    // Amenities — parsed from real DB data
+    const amenities = parseAmenities(room.amenities);
+    const amenitiesEl = document.getElementById('amenitiesList');
+    if (amenities.length === 0) {
+        amenitiesEl.innerHTML = '<div class="col-12 text-muted"><small>No amenities listed.</small></div>';
+    } else {
+        amenitiesEl.innerHTML = amenities.map(name => `
+            <div class="col-6 col-md-4 col-xl-3">
+                <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="background:var(--ov-primary-light)">
+                    <span class="d-flex align-items-center justify-content-center rounded-circle bg-white shadow-sm flex-shrink-0"
+                          style="width:30px;height:30px">
+                        <i class="fas ${getAmenityIcon(name)} text-ocean" style="font-size:.8rem"></i>
+                    </span>
+                    <small class="fw-semibold" style="font-size:.8rem">${name}</small>
+                </div>
+            </div>`).join('');
+    }
 
     updateUserUI();
 }
@@ -259,7 +330,7 @@ async function loadRoomReservations() {
         if (res?.ok) {
             let all = await res.json();
             if (Array.isArray(all)) {
-                const roomRes = all.filter(r => r.roomId == roomId || (r.room && r.room.id == roomId)).slice(0, 5);
+                const roomRes = all.filter(r => r.roomId === roomId || (r.room && r.room.id === roomId)).slice(0, 5);
                 const tbody = document.getElementById('roomReservations');
                 if (roomRes.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No reservations for this room</td></tr>';
@@ -282,9 +353,10 @@ async function loadRoomReservations() {
 
 function editRoom() {
     document.getElementById('editRoomNumber').value = room.roomNumber || '';
-    document.getElementById('editRoomType').value = room.roomType || room.type || 'STANDARD';
-    document.getElementById('editRoomRate').value = room.pricePerNight || room.ratePerNight || 0;
-    document.getElementById('editRoomCapacity').value = room.maxOccupancy || room.capacity || 2;
+    document.getElementById('editRoomType').value = room.roomType || 'STANDARD';
+    document.getElementById('editRoomFloor').value = room.floorNumber || 1;
+    document.getElementById('editRoomRate').value = room.ratePerNight || 0;
+    document.getElementById('editRoomCapacity').value = room.capacity || 2;
     document.getElementById('editRoomDescField').value = room.description || '';
     new bootstrap.Modal(document.getElementById('editRoomModal')).show();
 }
@@ -293,13 +365,11 @@ async function saveRoom(e) {
     e.preventDefault();
     const updated = {
         ...room,
-        roomNumber: document.getElementById('editRoomNumber').value,
-        roomType: document.getElementById('editRoomType').value,
-        type: document.getElementById('editRoomType').value,
-        pricePerNight: parseFloat(document.getElementById('editRoomRate').value),
+        roomNumber:  document.getElementById('editRoomNumber').value,
+        roomType:    document.getElementById('editRoomType').value,
+        floorNumber: parseInt(document.getElementById('editRoomFloor').value),
         ratePerNight: parseFloat(document.getElementById('editRoomRate').value),
-        maxOccupancy: parseInt(document.getElementById('editRoomCapacity').value),
-        capacity: parseInt(document.getElementById('editRoomCapacity').value),
+        capacity:    parseInt(document.getElementById('editRoomCapacity').value),
         description: document.getElementById('editRoomDescField').value
     };
     const res = await api(`/api/rooms/${roomId}`, { method: 'PUT', body: updated });
