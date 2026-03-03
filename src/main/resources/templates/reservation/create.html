@@ -79,8 +79,7 @@
                                 <option value="STANDARD">Standard</option>
                                 <option value="DELUXE">Deluxe</option>
                                 <option value="SUITE">Suite</option>
-                                <option value="PRESIDENTIAL">Presidential</option>
-                                <option value="FAMILY">Family</option>
+                                <option value="PENTHOUSE">Penthouse</option>
                             </select>
                         </div>
 
@@ -213,7 +212,7 @@ async function checkAvailability() {
 
 function filterRooms() {
     const type = document.getElementById('roomTypeFilter').value;
-    const filtered = type ? allRooms.filter(r => r.roomType === type || r.type === type) : allRooms;
+    const filtered = type ? allRooms.filter(r => r.roomType === type) : allRooms;
     renderRooms(filtered);
 }
 
@@ -226,16 +225,16 @@ function renderRooms(rooms) {
     container.innerHTML = rooms.map(r => `
         <div class="col-md-6 col-lg-4">
             <div class="room-card ${selectedRoom?.id === r.id ? 'border border-primary border-2' : ''}"
-                 style="cursor:pointer" onclick="selectRoom(${r.id}, this)">
+                 style="cursor:pointer" onclick="selectRoom('${r.id}', this)">
                 <div class="room-img">
-                    <i class="fas fa-${r.roomType === 'SUITE' || r.type === 'SUITE' ? 'crown' : r.roomType === 'PRESIDENTIAL' || r.type === 'PRESIDENTIAL' ? 'star' : r.roomType === 'FAMILY' || r.type === 'FAMILY' ? 'users' : 'bed'}"></i>
-                    <div class="room-price">${formatCurrency(r.pricePerNight || r.ratePerNight || 0)}/night</div>
+                    <i class="fas fa-${r.roomType === 'SUITE' ? 'crown' : r.roomType === 'PENTHOUSE' ? 'star' : r.roomType === 'DELUXE' ? 'gem' : 'bed'}"></i>
+                    <div class="room-price">${formatCurrency(r.ratePerNight || 0)}/night</div>
                 </div>
                 <div class="room-body">
                     <h5>Room ${r.roomNumber || r.id}</h5>
-                    <div>${roomTypeBadge(r.roomType || r.type)}</div>
+                    <div>${roomTypeBadge(r.roomType)}</div>
                     <div class="room-features">
-                        <span><i class="fas fa-users"></i> ${r.capacity || r.maxOccupancy || 2} guests</span>
+                        <span><i class="fas fa-users"></i> ${r.capacity || 2} guests</span>
                         <span><i class="fas fa-expand"></i> ${r.size || '30'}m²</span>
                     </div>
                     <div class="mt-2 text-muted" style="font-size:.82rem">${r.description || 'Comfortable room with ocean views'}</div>
@@ -250,7 +249,6 @@ function selectRoom(id, el) {
     document.getElementById('toStep3Btn').disabled = false;
 
     document.querySelectorAll('.room-card').forEach(c => c.classList.remove('border', 'border-primary', 'border-2'));
-    el.querySelector('.room-card')?.classList.add('border', 'border-primary', 'border-2') ||
     el.classList.add('border', 'border-primary', 'border-2');
     showToast('Room ' + (selectedRoom?.roomNumber || id) + ' selected', 'info');
 }
@@ -259,12 +257,12 @@ function populateConfirmation() {
     const ci = document.getElementById('checkInDate').value;
     const co = document.getElementById('checkOutDate').value;
     const nights = Math.ceil((new Date(co) - new Date(ci)) / 86400000);
-    const rate = selectedRoom?.pricePerNight || selectedRoom?.ratePerNight || 0;
+    const rate = selectedRoom?.ratePerNight || 0;
 
     document.getElementById('confCustomer').textContent = document.getElementById('customerId').value;
     document.getElementById('confGuests').textContent = document.getElementById('numberOfGuests').value;
     document.getElementById('confRequests').textContent = document.getElementById('specialRequests').value || '—';
-    document.getElementById('confRoom').textContent = 'Room ' + (selectedRoom?.roomNumber || selectedRoom?.id) + ' (' + (selectedRoom?.roomType || selectedRoom?.type) + ')';
+    document.getElementById('confRoom').textContent = 'Room ' + (selectedRoom?.roomNumber || selectedRoom?.id) + ' (' + selectedRoom?.roomType + ')';
     document.getElementById('confCheckIn').textContent = formatDate(ci);
     document.getElementById('confCheckOut').textContent = formatDate(co);
     document.getElementById('confNights').textContent = nights;
@@ -281,11 +279,11 @@ async function submitReservation(e) {
         const res = await api('/api/reservations', {
             method: 'POST',
             body: {
-                customerId: parseInt(document.getElementById('customerId').value),
-                roomId: parseInt(document.getElementById('selectedRoomId').value),
+                customerId: document.getElementById('customerId').value,
+                roomId: document.getElementById('selectedRoomId').value,
                 checkInDate: document.getElementById('checkInDate').value,
                 checkOutDate: document.getElementById('checkOutDate').value,
-                numberOfGuests: parseInt(document.getElementById('numberOfGuests').value),
+                numGuests: parseInt(document.getElementById('numberOfGuests').value),
                 specialRequests: document.getElementById('specialRequests').value
             }
         });
