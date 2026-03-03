@@ -1,5 +1,6 @@
 package com.oceanview.resort.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.oceanview.resort.model.enums.RoomType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -98,8 +99,9 @@ public class Room {
 
     /**
      * Reservations associated with this room.
-     * Lazy-loaded; the owning side is {@link Reservation#room}.
+     * Lazy-loaded; the owning side is {@link Reservation}.
      */
+    @JsonIgnore
     @OneToMany(mappedBy = "room", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Reservation> reservations = new ArrayList<>();
