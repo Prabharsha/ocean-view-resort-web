@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments/layout :: head('Customers')}">
+    <title>Customers – Ocean View Resort</title>
+</head>
+<body>
+
+<nav th:replace="~{fragments/layout :: sidebar}"></nav>
+<div th:replace="~{fragments/layout :: sidebarOverlay}"></div>
+
+<div class="ov-main">
+    <header th:replace="~{fragments/layout :: topbar('Customer Management')}"></header>
+
+    <div class="ov-content">
+
+        <!-- ── Toolbar ── -->
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-3">
+            <div class="d-flex gap-2 flex-grow-1" style="max-width:420px">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input id="searchInput" type="text" class="form-control ov-input border-start-0"
+                           placeholder="Search by name, email, phone…"
+                           oninput="debounceSearch(this.value)"/>
+                </div>
+                <button class="btn btn-outline-secondary" onclick="loadCustomers()">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <button class="btn btn-ocean" data-bs-toggle="modal" data-bs-target="#customerModal"
+                    onclick="openCreateModal()">
+                <i class="fas fa-user-plus me-2"></i>New Customer
+            </button>
+        </div>
+
+        <!-- ── Stats row ── -->
+        <div class="row g-3 mb-3" id="statsRow">
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:var(--ov-primary-light);color:var(--ov-primary)">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="statTotal">—</div>
+                        <div class="stat-label">Total Customers</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background:#e8f5e9;color:#2e7d32">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="statLoyalty">—</div>
+                        <div class="stat-label">Total Loyalty Pts</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Table ── -->
+        <div class="ov-card animate-in">
+            <div class="card-body-ov p-0">
+                <div class="table-responsive">
+                    <table class="table ov-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th class="text-center">Loyalty Pts</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerTableBody">
+                            <tr><td colspan="7" class="text-center py-5">
+                                <div class="ov-spinner mx-auto"></div>
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /ov-content -->
+</div><!-- /ov-main -->
+
+<!-- ══════════════════ Create / Edit Modal ══════════════════ -->
+<div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--ov-primary);color:#fff">
+                <h5 class="modal-title" id="customerModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>New Customer
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customerForm" onsubmit="saveCustomer(event)">
+                    <input type="hidden" id="editCustomerId"/>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control ov-input" id="cf_firstName" required
+                                   placeholder="e.g. John"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control ov-input" id="cf_lastName" required
+                                   placeholder="e.g. Silva"/>
+                        </div>
+                        <div class="col-md-6" id="usernameRow">
+                            <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control ov-input" id="cf_username"
+                                   placeholder="e.g. john_silva" minlength="3"/>
+                        </div>
+                        <div class="col-md-6" id="passwordRow">
+                            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control ov-input" id="cf_password"
+                                       placeholder="Min. 8 characters" minlength="8"/>
+                                <button type="button" class="btn btn-outline-secondary"
+                                        onclick="togglePwd('cf_password',this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control ov-input" id="cf_email" required
+                                   placeholder="e.g. john@email.com"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone</label>
+                            <input type="text" class="form-control ov-input" id="cf_phone"
+                                   placeholder="+94771234567"/>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Address</label>
+                            <textarea class="form-control ov-input" id="cf_address" rows="2"
+                                      placeholder="Residential / postal address"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="customerForm" class="btn btn-ocean" id="saveCustomerBtn">
+                    <i class="fas fa-save me-2"></i>Save Customer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════ View / Detail Modal ══════════════════ -->
+<div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--ov-primary);color:#fff">
+                <h5 class="modal-title"><i class="fas fa-user me-2"></i>Customer Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewModalBody">Loading…</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-ocean" id="editFromViewBtn">
+                    <i class="fas fa-edit me-2"></i>Edit
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════ Deactivate Confirm Modal ══════════════════ -->
+<div class="modal fade" id="deactivateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Deactivate</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Deactivate <strong id="deactivateName"></strong>?<br/>
+                <small class="text-muted">The account will be hidden but data is preserved.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger btn-sm" id="confirmDeactivateBtn">Deactivate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script>
+let allCustomers = [];
+let searchTimer;
+
+// ── Load ──────────────────────────────────────────────────
+async function loadCustomers(q = '') {
+    const url = q ? `/api/customers?q=${encodeURIComponent(q)}` : '/api/customers';
+    const res = await api(url);
+    if (!res?.ok) { showToast('Failed to load customers', 'error'); return; }
+    allCustomers = await res.json();
+    renderTable(allCustomers);
+    updateStats(allCustomers);
+}
+
+function debounceSearch(val) {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => loadCustomers(val), 350);
+}
+
+// ── Render Table ──────────────────────────────────────────
+function renderTable(customers) {
+    const tbody = document.getElementById('customerTableBody');
+    if (!customers.length) {
+        tbody.innerHTML = `<tr><td colspan="7">
+            <div class="empty-state"><i class="fas fa-users"></i>
+            <h5>No customers found</h5>
+            <p>Add a new customer to get started.</p></div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = customers.map(c => `
+        <tr>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="user-avatar" style="width:36px;height:36px;font-size:.8rem;border-radius:50%;background:var(--ov-primary);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                        ${(c.firstName?.[0]||'') + (c.lastName?.[0]||'')}
+                    </div>
+                    <div>
+                        <div class="fw-semibold">${c.firstName} ${c.lastName}</div>
+                        <div class="text-muted" style="font-size:.78rem">${c.id}</div>
+                    </div>
+                </div>
+            </td>
+            <td>${c.username}</td>
+            <td>${c.email}</td>
+            <td>${c.phone || '—'}</td>
+            <td class="text-center"><span class="badge bg-warning text-dark">${c.loyaltyPoints}</span></td>
+            <td class="text-center"><span class="badge-status ${c.active ? 'badge-confirmed' : 'badge-cancelled'}">${c.active ? 'Active' : 'Inactive'}</span></td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary me-1" title="View" onclick="viewCustomer('${c.id}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-secondary me-1" title="Edit" onclick="editCustomer('${c.id}')">
+                    <i class="fas fa-edit"></i>
+                </button>
+                ${c.active ? `<button class="btn btn-sm btn-outline-danger" title="Deactivate" onclick="promptDeactivate('${c.id}','${c.firstName} ${c.lastName}')">
+                    <i class="fas fa-user-slash"></i></button>` : ''}
+            </td>
+        </tr>`).join('');
+}
+
+function updateStats(customers) {
+    document.getElementById('statTotal').textContent = customers.length;
+    document.getElementById('statLoyalty').textContent =
+        customers.reduce((s, c) => s + (c.loyaltyPoints || 0), 0).toLocaleString();
+}
+
+// ── Create ────────────────────────────────────────────────
+function openCreateModal() {
+    document.getElementById('customerModalLabel').innerHTML =
+        '<i class="fas fa-user-plus me-2"></i>New Customer';
+    document.getElementById('customerForm').reset();
+    document.getElementById('editCustomerId').value = '';
+    document.getElementById('usernameRow').style.display = '';
+    document.getElementById('passwordRow').style.display = '';
+    document.getElementById('cf_username').required = true;
+    document.getElementById('cf_password').required = true;
+}
+
+// ── Edit ──────────────────────────────────────────────────
+function editCustomer(id) {
+    const c = allCustomers.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('customerModalLabel').innerHTML =
+        '<i class="fas fa-edit me-2"></i>Edit Customer';
+    document.getElementById('editCustomerId').value = c.id;
+    document.getElementById('cf_firstName').value  = c.firstName || '';
+    document.getElementById('cf_lastName').value   = c.lastName  || '';
+    document.getElementById('cf_email').value      = c.email     || '';
+    document.getElementById('cf_phone').value      = c.phone     || '';
+    document.getElementById('cf_address').value    = c.address   || '';
+    // hide username/password for edits
+    document.getElementById('usernameRow').style.display = 'none';
+    document.getElementById('passwordRow').style.display = 'none';
+    document.getElementById('cf_username').required = false;
+    document.getElementById('cf_password').required = false;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('customerModal')).show();
+    bootstrap.Modal.getInstance(document.getElementById('viewModal'))?.hide();
+}
+
+// ── Save (create or update) ───────────────────────────────
+async function saveCustomer(e) {
+    e.preventDefault();
+    const btn = document.getElementById('saveCustomerBtn');
+    btn.disabled = true;
+
+    const id = document.getElementById('editCustomerId').value;
+    const body = {
+        firstName: document.getElementById('cf_firstName').value,
+        lastName:  document.getElementById('cf_lastName').value,
+        email:     document.getElementById('cf_email').value,
+        phone:     document.getElementById('cf_phone').value,
+        address:   document.getElementById('cf_address').value,
+    };
+    if (!id) {
+        body.username = document.getElementById('cf_username').value;
+        body.password = document.getElementById('cf_password').value;
+    }
+
+    const isCreate = !id;
+    const res = await api(isCreate ? '/api/customers' : `/api/customers/${id}`, {
+        method: isCreate ? 'POST' : 'PUT',
+        body
+    });
+
+    if (res?.ok) {
+        showToast(isCreate ? 'Customer created!' : 'Customer updated!', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('customerModal'))?.hide();
+        await loadCustomers(document.getElementById('searchInput').value);
+    } else {
+        const err = await res?.json().catch(() => ({}));
+        showToast(err.message || 'Failed to save customer', 'error');
+    }
+    btn.disabled = false;
+}
+
+// ── View ──────────────────────────────────────────────────
+function viewCustomer(id) {
+    const c = allCustomers.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('viewModalBody').innerHTML = `
+        <div class="text-center mb-3">
+            <div class="mx-auto mb-2" style="width:60px;height:60px;border-radius:50%;background:var(--ov-primary);color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center">
+                ${(c.firstName?.[0]||'') + (c.lastName?.[0]||'')}
+            </div>
+            <h5 class="mb-0">${c.firstName} ${c.lastName}</h5>
+            <small class="text-muted">@${c.username}</small>
+        </div>
+        <table class="table table-sm">
+            <tr><th style="width:40%">Customer ID</th><td><code>${c.id}</code></td></tr>
+            <tr><th>Email</th><td>${c.email}</td></tr>
+            <tr><th>Phone</th><td>${c.phone || '—'}</td></tr>
+            <tr><th>Address</th><td>${c.address || '—'}</td></tr>
+            <tr><th>Loyalty Points</th><td><span class="badge bg-warning text-dark">${c.loyaltyPoints}</span></td></tr>
+            <tr><th>Status</th><td><span class="badge-status ${c.active ? 'badge-confirmed' : 'badge-cancelled'}">${c.active ? 'Active' : 'Inactive'}</span></td></tr>
+        </table>`;
+    document.getElementById('editFromViewBtn').onclick = () => editCustomer(id);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('viewModal')).show();
+}
+
+// ── Deactivate ────────────────────────────────────────────
+function promptDeactivate(id, name) {
+    document.getElementById('deactivateName').textContent = name;
+    document.getElementById('confirmDeactivateBtn').onclick = async () => {
+        const res = await api(`/api/customers/${id}`, { method: 'DELETE' });
+        if (res?.ok || res?.status === 204) {
+            showToast('Customer deactivated', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('deactivateModal'))?.hide();
+            await loadCustomers();
+        } else {
+            showToast('Failed to deactivate', 'error');
+        }
+    };
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('deactivateModal')).show();
+}
+
+function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.querySelector('i').className = inp.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => loadCustomers());
+</script>
+</body>
+</html>
+

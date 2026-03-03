@@ -96,4 +96,14 @@ public class PageController {
     public String printBillPage() {
         return "bill/print";
     }
+
+    @GetMapping("/customers")
+    public String customerListPage() {
+        return "customer/list";
+    }
+
+    @GetMapping("/customers/{id}")
+    public String customerDetailPage() {
+        return "customer/detail";
+    }
 }

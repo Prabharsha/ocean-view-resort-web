@@ -59,6 +59,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/login", "/register", "/error",
                         "/dashboard", "/reservations/**", "/rooms/**",
                         "/bills/**", "/reports", "/reports/**",
+                        "/customers/**",
                         "/profile", "/help").permitAll()
 
                 // ─── Reports: MANAGER only ───
@@ -72,6 +73,15 @@ public class SecurityConfig {
 
                 // ─── User management: MANAGER only ───
                 .requestMatchers("/api/users/**").hasRole("MANAGER")
+
+                // ─── Customer management: STAFF and MANAGER ───
+                .requestMatchers(HttpMethod.GET, "/api/customers", "/api/customers/**")
+                    .hasAnyRole("STAFF", "MANAGER")
+                .requestMatchers(HttpMethod.POST, "/api/customers")
+                    .hasAnyRole("STAFF", "MANAGER")
+                .requestMatchers(HttpMethod.PUT, "/api/customers/**")
+                    .hasAnyRole("STAFF", "MANAGER")
+                .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("MANAGER")
 
                 // ─── Bill discount: MANAGER and STAFF ───
                 .requestMatchers(HttpMethod.POST, "/api/bills/*/discount")

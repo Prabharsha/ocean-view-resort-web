@@ -33,19 +33,76 @@
 
                 <form id="reservationForm" onsubmit="submitReservation(event)">
 
-                    <!-- Step 1: Guest & Dates -->
+                    <!-- ═══════ Step 1: Guest & Dates ═══════ -->
                     <div class="wizard-panel active" id="panel1">
-                        <h5 class="fw-bold mb-3"><i class="fas fa-user-circle me-2 text-primary"></i>Guest Information &amp; Dates</h5>
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-user-circle me-2 text-primary"></i>Guest Information &amp; Dates
+                        </h5>
                         <div class="row g-3">
+
+                            <!-- Customer Search -->
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Customer ID</label>
-                                <input type="number" class="form-control ov-input" id="customerId" required placeholder="Enter Customer ID"/>
-                                <div class="form-text">Enter the registered customer ID</div>
+                                <label class="form-label fw-semibold">
+                                    Customer <span class="text-danger">*</span>
+                                </label>
+
+                                <!-- Search input (visible until a customer is selected) -->
+                                <div id="customerSearchWrap" class="position-relative">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white border-end-0">
+                                            <i class="fas fa-search text-muted" id="searchIcon"></i>
+                                        </span>
+                                        <input type="text" class="form-control ov-input border-start-0"
+                                               id="customerSearch" autocomplete="off"
+                                               placeholder="Search by name, email or phone…"
+                                               oninput="onSearchInput(this.value)"/>
+                                    </div>
+                                    <!-- Autocomplete dropdown -->
+                                    <div id="customerDropdown"
+                                         style="display:none;position:absolute;top:100%;left:0;right:0;z-index:1050;
+                                                background:#fff;border:1px solid #dee2e6;border-radius:0 0 8px 8px;
+                                                box-shadow:0 6px 20px rgba(0,0,0,.12);max-height:280px;overflow-y:auto">
+                                    </div>
+                                </div>
+
+                                <!-- Selected customer card -->
+                                <div id="selectedCustomerCard"
+                                     class="mt-2 p-2 rounded-3 d-flex align-items-center gap-2"
+                                     style="display:none!important;background:var(--ov-sand,#f8f4f0)">
+                                    <div id="scAvatar"
+                                         style="width:38px;height:38px;border-radius:50%;background:var(--ov-primary);
+                                                color:#fff;font-size:.85rem;display:flex;align-items:center;
+                                                justify-content:center;flex-shrink:0;font-weight:600"></div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div class="fw-semibold text-truncate" id="scName"></div>
+                                        <div class="text-muted text-truncate" style="font-size:.76rem" id="scMeta"></div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0"
+                                            onclick="clearCustomer()" title="Change customer">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Hidden field sent to server -->
+                                <input type="hidden" id="customerId"/>
+
+                                <div class="form-text">
+                                    Customer not registered?
+                                    <a href="#" data-bs-toggle="modal" data-bs-target="#registerCustomerModal"
+                                       style="color:var(--ov-primary);font-weight:500">
+                                        Register here <i class="fas fa-user-plus" style="font-size:.75rem"></i>
+                                    </a>
+                                </div>
                             </div>
+
+                            <!-- Number of guests -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Number of Guests</label>
-                                <input type="number" class="form-control ov-input" id="numberOfGuests" min="1" max="10" value="1" required/>
+                                <input type="number" class="form-control ov-input" id="numberOfGuests"
+                                       min="1" max="10" value="1" required/>
                             </div>
+
+                            <!-- Dates -->
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Check-in Date</label>
                                 <input type="date" class="form-control ov-input" id="checkInDate" required
@@ -69,7 +126,7 @@
                         </div>
                     </div>
 
-                    <!-- Step 2: Room Selection -->
+                    <!-- ═══════ Step 2: Room Selection ═══════ -->
                     <div class="wizard-panel" id="panel2">
                         <h5 class="fw-bold mb-3"><i class="fas fa-bed me-2 text-primary"></i>Select a Room</h5>
 
@@ -101,15 +158,17 @@
                         </div>
                     </div>
 
-                    <!-- Step 3: Confirmation -->
+                    <!-- ═══════ Step 3: Confirmation ═══════ -->
                     <div class="wizard-panel" id="panel3">
-                        <h5 class="fw-bold mb-3"><i class="fas fa-clipboard-check me-2 text-primary"></i>Booking Summary</h5>
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-clipboard-check me-2 text-primary"></i>Booking Summary
+                        </h5>
 
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="p-3 rounded-3" style="background:var(--ov-sand)">
                                     <h6 class="fw-bold mb-3">Guest Details</h6>
-                                    <div class="mb-2"><span class="text-muted">Customer ID:</span> <strong id="confCustomer"></strong></div>
+                                    <div class="mb-2"><span class="text-muted">Customer:</span> <strong id="confCustomer"></strong></div>
                                     <div class="mb-2"><span class="text-muted">Guests:</span> <strong id="confGuests"></strong></div>
                                     <div><span class="text-muted">Special Requests:</span> <strong id="confRequests">—</strong></div>
                                 </div>
@@ -145,13 +204,88 @@
     </div>
 </div>
 
+<!-- ═══════════════ Register Customer Modal ═══════════════ -->
+<div class="modal fade" id="registerCustomerModal" tabindex="-1"
+     aria-labelledby="regModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" style="background:var(--ov-primary);color:#fff">
+                <h5 class="modal-title" id="regModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Register New Customer
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info d-flex align-items-center gap-2 py-2" style="font-size:.85rem">
+                    <i class="fas fa-info-circle"></i>
+                    The new customer will be automatically selected for this reservation.
+                </div>
+                <form id="registerForm" onsubmit="registerNewCustomer(event)">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control ov-input" id="rc_firstName" required
+                                   placeholder="e.g. John"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control ov-input" id="rc_lastName" required
+                                   placeholder="e.g. Silva"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control ov-input" id="rc_username" required
+                                   minlength="3" placeholder="e.g. john_silva"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control ov-input" id="rc_password"
+                                       required minlength="8" placeholder="Min. 8 characters"/>
+                                <button type="button" class="btn btn-outline-secondary"
+                                        onclick="togglePwd('rc_password',this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control ov-input" id="rc_email" required
+                                   placeholder="e.g. john@email.com"/>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone</label>
+                            <input type="text" class="form-control ov-input" id="rc_phone"
+                                   placeholder="+94771234567"/>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Address</label>
+                            <textarea class="form-control ov-input" id="rc_address" rows="2"
+                                      placeholder="Residential / postal address"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="registerForm" class="btn btn-ocean" id="regSaveBtn">
+                    <i class="fas fa-user-check me-2"></i>Register &amp; Select
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div th:replace="~{fragments/layout :: scripts}"></div>
 
 <script>
+// ── State ─────────────────────────────────────────────────
 let allRooms = [];
 let selectedRoom = null;
+let selectedCustomerObj = null;
+let searchDebounceTimer = null;
 
-// Amenity icon helper
+// ── Amenity helpers ───────────────────────────────────────
 const AMENITY_ICONS = {
     'wifi':'fa-wifi','wi-fi':'fa-wifi','tv':'fa-tv','air conditioning':'fa-snowflake',
     'hot water':'fa-hot-tub','bathtub':'fa-bath','jacuzzi':'fa-hot-tub',
@@ -184,27 +318,34 @@ function amenityPills(amenitiesStr, max = 4) {
     </div>`;
 }
 
-// Set min date to today
+// ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('checkInDate').min = today;
     document.getElementById('checkOutDate').min = today;
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#customerSearchWrap')) {
+            document.getElementById('customerDropdown').style.display = 'none';
+        }
+    });
 });
 
+// ── Wizard navigation ─────────────────────────────────────
 function goToStep(step) {
-    // Validate step transitions
     if (step === 2) {
         const cid = document.getElementById('customerId').value;
-        const ci = document.getElementById('checkInDate').value;
-        const co = document.getElementById('checkOutDate').value;
-        if (!cid || !ci || !co) { showToast('Please fill in all required fields', 'warning'); return; }
+        const ci  = document.getElementById('checkInDate').value;
+        const co  = document.getElementById('checkOutDate').value;
+        if (!cid) { showToast('Please select a registered customer', 'warning'); return; }
+        if (!ci || !co) { showToast('Please fill in check-in and check-out dates', 'warning'); return; }
         if (new Date(co) <= new Date(ci)) { showToast('Check-out must be after check-in', 'warning'); return; }
     }
     if (step === 3 && !document.getElementById('selectedRoomId').value) {
         showToast('Please select a room', 'warning'); return;
     }
 
-    // Update wizard UI
     for (let i = 1; i <= 3; i++) {
         document.getElementById('panel' + i).classList.toggle('active', i === step);
         const ws = document.getElementById('ws' + i);
@@ -212,11 +353,132 @@ function goToStep(step) {
         if (i < step) ws.classList.add('completed');
         if (i === step) ws.classList.add('active');
     }
-
-    // Populate confirmation
     if (step === 3) populateConfirmation();
 }
 
+// ── Customer search ───────────────────────────────────────
+function onSearchInput(val) {
+    clearTimeout(searchDebounceTimer);
+    if (!val || val.length < 2) {
+        document.getElementById('customerDropdown').style.display = 'none';
+        return;
+    }
+    searchDebounceTimer = setTimeout(() => fetchCustomers(val), 320);
+}
+
+async function fetchCustomers(q) {
+    const icon = document.getElementById('searchIcon');
+    icon.className = 'fas fa-spinner fa-spin text-muted';
+    const res = await api('/api/customers?q=' + encodeURIComponent(q));
+    icon.className = 'fas fa-search text-muted';
+    if (!res?.ok) return;
+    const list = await res.json();
+    renderDropdown(list);
+}
+
+function renderDropdown(list) {
+    const dd = document.getElementById('customerDropdown');
+    if (!list.length) {
+        dd.innerHTML = `<div class="px-3 py-3 text-center" style="font-size:.87rem;color:#666">
+            No customers found.<br/>
+            <a href="#" class="fw-semibold" style="color:var(--ov-primary)"
+               data-bs-toggle="modal" data-bs-target="#registerCustomerModal"
+               onclick="dd.style.display='none'">
+                <i class="fas fa-user-plus me-1"></i>Register new customer
+            </a></div>`;
+    } else {
+        dd.innerHTML = list.map(c => `
+            <div class="d-flex align-items-center gap-2 px-3 py-2 cust-opt"
+                 style="cursor:pointer;border-bottom:1px solid #f3f3f3;transition:background .15s"
+                 onmouseenter="this.style.background='#f0f7ff'"
+                 onmouseleave="this.style.background=''"
+
+                 onclick='pickCustomer(${JSON.stringify(c)})'>
+                <div style="width:36px;height:36px;border-radius:50%;background:var(--ov-primary);color:#fff;
+                            font-size:.8rem;font-weight:600;display:flex;align-items:center;
+                            justify-content:center;flex-shrink:0">
+                    ${(c.firstName?.[0]||'')+(c.lastName?.[0]||'')}
+                </div>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="fw-semibold text-truncate" style="font-size:.9rem">
+                        ${c.firstName} ${c.lastName}
+                    </div>
+                    <div class="text-muted text-truncate" style="font-size:.76rem">
+                        ${c.email}${c.phone ? ' · '+c.phone : ''}
+                    </div>
+                </div>
+                <span class="badge bg-warning text-dark flex-shrink-0" style="font-size:.7rem">
+                    ${c.loyaltyPoints} pts
+                </span>
+            </div>`).join('');
+    }
+    dd.style.display = 'block';
+}
+
+function pickCustomer(c) {
+    selectedCustomerObj = c;
+    document.getElementById('customerId').value = c.id;
+    document.getElementById('customerDropdown').style.display = 'none';
+    document.getElementById('customerSearch').value = '';
+
+    // Show card
+    document.getElementById('scAvatar').textContent =
+        (c.firstName?.[0]||'').toUpperCase()+(c.lastName?.[0]||'').toUpperCase();
+    document.getElementById('scName').textContent = c.firstName + ' ' + c.lastName;
+    document.getElementById('scMeta').textContent =
+        c.email + (c.phone ? ' · ' + c.phone : '') + ' · ' + c.loyaltyPoints + ' loyalty pts';
+    document.getElementById('selectedCustomerCard').style.cssText = 'display:flex!important';
+    document.getElementById('customerSearchWrap').style.display = 'none';
+}
+
+function clearCustomer() {
+    selectedCustomerObj = null;
+    document.getElementById('customerId').value = '';
+    document.getElementById('customerSearch').value = '';
+    document.getElementById('selectedCustomerCard').style.cssText = 'display:none!important';
+    document.getElementById('customerSearchWrap').style.display = '';
+    document.getElementById('customerSearch').focus();
+}
+
+// ── Register new customer from wizard ─────────────────────
+async function registerNewCustomer(e) {
+    e.preventDefault();
+    const btn = document.getElementById('regSaveBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering...';
+
+    const body = {
+        username:  document.getElementById('rc_username').value,
+        password:  document.getElementById('rc_password').value,
+        firstName: document.getElementById('rc_firstName').value,
+        lastName:  document.getElementById('rc_lastName').value,
+        email:     document.getElementById('rc_email').value,
+        phone:     document.getElementById('rc_phone').value,
+        address:   document.getElementById('rc_address').value,
+    };
+
+    const res = await api('/api/customers', { method: 'POST', body });
+    if (res?.ok) {
+        const newC = await res.json();
+        showToast('Customer registered and selected!', 'success');
+        bootstrap.Modal.getInstance(document.getElementById('registerCustomerModal'))?.hide();
+        document.getElementById('registerForm').reset();
+        pickCustomer(newC);
+    } else {
+        const err = await res?.json().catch(() => ({}));
+        showToast(err.message || 'Registration failed', 'error');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-user-check me-2"></i>Register &amp; Select';
+}
+
+function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.querySelector('i').className = inp.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+
+// ── Room availability ─────────────────────────────────────
 async function checkAvailability() {
     const ci = document.getElementById('checkInDate').value;
     const co = document.getElementById('checkOutDate').value;
@@ -231,7 +493,6 @@ async function checkAvailability() {
             allRooms = await res.json();
             renderRooms(allRooms);
         } else {
-            // Fallback: load all rooms
             const fallback = await api('/api/rooms');
             if (fallback?.ok) {
                 allRooms = (await fallback.json()).filter(r => r.available);
@@ -245,13 +506,12 @@ async function checkAvailability() {
 
 function filterRooms() {
     const type = document.getElementById('roomTypeFilter').value;
-    const filtered = type ? allRooms.filter(r => r.roomType === type) : allRooms;
-    renderRooms(filtered);
+    renderRooms(type ? allRooms.filter(r => r.roomType === type) : allRooms);
 }
 
 function renderRooms(rooms) {
     const container = document.getElementById('availableRooms');
-    if (rooms.length === 0) {
+    if (!rooms.length) {
         container.innerHTML = '<div class="col-12"><div class="empty-state"><i class="fas fa-bed"></i><h5>No Rooms Available</h5><p>Try different dates or room type.</p></div></div>';
         return;
     }
@@ -260,7 +520,7 @@ function renderRooms(rooms) {
             <div class="room-card ${selectedRoom?.id === r.id ? 'border border-primary border-2' : ''}"
                  style="cursor:pointer" onclick="selectRoom('${r.id}', this)">
                 <div class="room-img">
-                    <i class="fas fa-${r.roomType === 'SUITE' ? 'crown' : r.roomType === 'PENTHOUSE' ? 'star' : r.roomType === 'DELUXE' ? 'gem' : 'bed'}"></i>
+                    <i class="fas fa-${r.roomType==='SUITE'?'crown':r.roomType==='PENTHOUSE'?'star':r.roomType==='DELUXE'?'gem':'bed'}"></i>
                     <div class="room-price">${formatCurrency(r.ratePerNight || 0)}/night</div>
                 </div>
                 <div class="room-body">
@@ -271,7 +531,9 @@ function renderRooms(rooms) {
                         <span><i class="fas fa-layer-group"></i> Floor ${r.floorNumber || '—'}</span>
                     </div>
                     ${amenityPills(r.amenities, 3)}
-                    <div class="mt-2 text-muted" style="font-size:.82rem">${r.description || 'Comfortable room with ocean views'}</div>
+                    <div class="mt-2 text-muted" style="font-size:.82rem">
+                        ${r.description || 'Comfortable room with ocean views'}
+                    </div>
                 </div>
             </div>
         </div>`).join('');
@@ -281,28 +543,32 @@ function selectRoom(id, el) {
     selectedRoom = allRooms.find(r => r.id === id);
     document.getElementById('selectedRoomId').value = id;
     document.getElementById('toStep3Btn').disabled = false;
-
-    document.querySelectorAll('.room-card').forEach(c => c.classList.remove('border', 'border-primary', 'border-2'));
-    el.classList.add('border', 'border-primary', 'border-2');
+    document.querySelectorAll('.room-card').forEach(c => c.classList.remove('border','border-primary','border-2'));
+    el.classList.add('border','border-primary','border-2');
     showToast('Room ' + (selectedRoom?.roomNumber || id) + ' selected', 'info');
 }
 
+// ── Confirmation panel ────────────────────────────────────
 function populateConfirmation() {
     const ci = document.getElementById('checkInDate').value;
     const co = document.getElementById('checkOutDate').value;
     const nights = Math.ceil((new Date(co) - new Date(ci)) / 86400000);
     const rate = selectedRoom?.ratePerNight || 0;
 
-    document.getElementById('confCustomer').textContent = document.getElementById('customerId').value;
+    document.getElementById('confCustomer').textContent = selectedCustomerObj
+        ? (selectedCustomerObj.firstName + ' ' + selectedCustomerObj.lastName)
+        : document.getElementById('customerId').value;
     document.getElementById('confGuests').textContent = document.getElementById('numberOfGuests').value;
     document.getElementById('confRequests').textContent = document.getElementById('specialRequests').value || '—';
-    document.getElementById('confRoom').textContent = 'Room ' + (selectedRoom?.roomNumber || selectedRoom?.id) + ' (' + selectedRoom?.roomType + ')';
-    document.getElementById('confCheckIn').textContent = formatDate(ci);
+    document.getElementById('confRoom').textContent =
+        'Room ' + (selectedRoom?.roomNumber || selectedRoom?.id) + ' (' + selectedRoom?.roomType + ')';
+    document.getElementById('confCheckIn').textContent  = formatDate(ci);
     document.getElementById('confCheckOut').textContent = formatDate(co);
-    document.getElementById('confNights').textContent = nights;
-    document.getElementById('confTotal').textContent = formatCurrency(nights * rate);
+    document.getElementById('confNights').textContent   = nights;
+    document.getElementById('confTotal').textContent    = formatCurrency(nights * rate);
 }
 
+// ── Submit reservation ────────────────────────────────────
 async function submitReservation(e) {
     e.preventDefault();
     const btn = document.getElementById('confirmBtn');
@@ -313,11 +579,11 @@ async function submitReservation(e) {
         const res = await api('/api/reservations', {
             method: 'POST',
             body: {
-                customerId: document.getElementById('customerId').value,
-                roomId: document.getElementById('selectedRoomId').value,
-                checkInDate: document.getElementById('checkInDate').value,
-                checkOutDate: document.getElementById('checkOutDate').value,
-                numGuests: parseInt(document.getElementById('numberOfGuests').value),
+                customerId:      document.getElementById('customerId').value,
+                roomId:          document.getElementById('selectedRoomId').value,
+                checkInDate:     document.getElementById('checkInDate').value,
+                checkOutDate:    document.getElementById('checkOutDate').value,
+                numGuests:       parseInt(document.getElementById('numberOfGuests').value),
                 specialRequests: document.getElementById('specialRequests').value
             }
         });
