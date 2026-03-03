@@ -244,4 +244,13 @@ public class BillServiceImpl implements BillService {
                 .map(billMapper::toDTO)
                 .collect(Collectors.toList());
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public List<BillDTO> getAllBills() {
+        log.debug("Finding all bills");
+        return billRepository.findAll().stream()
+                .map(billMapper::toDTO)
+                .collect(Collectors.toList());
+    }
 }

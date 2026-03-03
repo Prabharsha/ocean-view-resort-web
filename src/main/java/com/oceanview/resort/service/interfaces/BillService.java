@@ -71,4 +71,11 @@ public interface BillService {
      * @return list of unpaid bill DTOs
      */
     List<BillDTO> getUnpaidBills();
+
+    /**
+     * Returns all bills.
+     *
+     * @return list of all bill DTOs
+     */
+    List<BillDTO> getAllBills();
 }

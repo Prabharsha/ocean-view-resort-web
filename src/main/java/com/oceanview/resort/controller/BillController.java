@@ -33,6 +33,16 @@ public class BillController {
     private final BillService billService;
 
     /**
+     * Returns all bills.
+     */
+    @GetMapping
+    @Operation(summary = "All Bills", description = "Get all bills")
+    public ResponseEntity<List<BillDTO>> getAllBills() {
+        List<BillDTO> bills = billService.getAllBills();
+        return ResponseEntity.ok(bills);
+    }
+
+    /**
      * Generates a bill for a reservation.
      */
     @PostMapping("/generate/{reservationId}")

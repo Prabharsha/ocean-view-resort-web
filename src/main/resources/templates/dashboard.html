@@ -240,59 +240,18 @@ async function loadRevenueChart(months) {
     const ctx = document.getElementById('revenueChart');
     if (!ctx) return;
 
-    // Build month labels going back N months
-    const labels = [], revenueData = [], occupancyData = [];
-    const now = new Date();
-    for (let i = months - 1; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        labels.push(d.toLocaleString('en-US', { month: 'short', year: '2-digit' }));
-        revenueData.push(0);
-        occupancyData.push(0);
-    }
+    let labels = [], revenueData = [], occupancyData = [];
 
     try {
-        // Fetch bills for revenue
-        const billsRes = await api('/api/bills');
-        if (billsRes?.ok) {
-            const bills = await billsRes.json();
-            const billList = Array.isArray(bills) ? bills : (bills.content || []);
-            billList.forEach(b => {
-                if (b.paymentStatus !== 'PAID' && b.paymentStatus !== 'UNPAID') return;
-                const dateStr = b.billDate || b.createdAt;
-                if (!dateStr) return;
-                const d = new Date(dateStr);
-                for (let i = 0; i < months; i++) {
-                    const ref = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
-                    if (d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth()) {
-                        revenueData[i] += (b.totalAmount || b.total || 0);
-                        break;
-                    }
-                }
-            });
-        }
-
-        // Fetch reservations for occupancy %
-        const resRes = await api('/api/reservations');
-        const roomsRes = await api('/api/rooms');
-        if (resRes?.ok && roomsRes?.ok) {
-            const reservations = await resRes.json();
-            const rooms = await roomsRes.json();
-            const resList = Array.isArray(reservations) ? reservations : (reservations.content || []);
-            const totalRooms = Array.isArray(rooms) ? rooms.length : 1;
-            for (let i = 0; i < months; i++) {
-                const ref = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
-                const refEnd = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
-                const occupied = resList.filter(r => {
-                    if (r.status === 'CANCELLED') return false;
-                    const cin = r.checkInDate ? new Date(r.checkInDate) : null;
-                    const cout = r.checkOutDate ? new Date(r.checkOutDate) : null;
-                    return cin && cout && cin <= refEnd && cout >= ref;
-                }).length;
-                occupancyData[i] = totalRooms > 0 ? Math.min(100, Math.round((occupied / totalRooms) * 100)) : 0;
-            }
+        const res = await api(`/api/dashboard/revenue?months=${months}`);
+        if (res?.ok) {
+            const data = await res.json();
+            labels       = data.labels   || [];
+            revenueData  = data.revenue  || [];
+            occupancyData= data.occupancy|| [];
         }
     } catch (e) {
-        console.warn('Revenue chart data error:', e);
+        console.warn('Revenue chart error:', e);
     }
 
     if (revenueChartObj) revenueChartObj.destroy();
@@ -324,7 +283,14 @@ async function loadRevenueChart(months) {
             maintainAspectRatio: false,
             interaction: { intersect: false, mode: 'index' },
             plugins: {
-                legend: { position: 'top', labels: { usePointStyle: true, padding: 15 } }
+                legend: { position: 'top', labels: { usePointStyle: true, padding: 15 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.dataset.yAxisID === 'y1'
+                            ? ctx.dataset.label + ': ' + ctx.parsed.y + '%'
+                            : ctx.dataset.label + ': ' + formatCurrency(ctx.parsed.y)
+                    }
+                }
             },
             scales: {
                 y: {
