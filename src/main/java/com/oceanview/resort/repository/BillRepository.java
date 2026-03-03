@@ -15,6 +15,11 @@ import java.util.Optional;
 public interface BillRepository extends JpaRepository<Bill, String> {
 
     /**
+     * Finds all bills ordered by generation date descending (newest first).
+     */
+    List<Bill> findAllByOrderByGeneratedAtDesc();
+
+    /**
      * Finds a bill by the associated reservation ID.
      */
     Optional<Bill> findByReservationId(String reservationId);

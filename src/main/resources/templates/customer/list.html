@@ -68,7 +68,6 @@
                         <thead>
                             <tr>
                                 <th>Customer</th>
-                                <th>Username</th>
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th class="text-center">Loyalty Pts</th>
@@ -77,7 +76,7 @@
                             </tr>
                         </thead>
                         <tbody id="customerTableBody">
-                            <tr><td colspan="7" class="text-center py-5">
+                            <tr><td colspan="6" class="text-center py-5">
                                 <div class="ov-spinner mx-auto"></div>
                             </td></tr>
                         </tbody>
@@ -113,22 +112,6 @@
                             <input type="text" class="form-control ov-input" id="cf_lastName" required
                                    placeholder="e.g. Silva"/>
                         </div>
-                        <div class="col-md-6" id="usernameRow">
-                            <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control ov-input" id="cf_username"
-                                   placeholder="e.g. john_silva" minlength="3"/>
-                        </div>
-                        <div class="col-md-6" id="passwordRow">
-                            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="password" class="form-control ov-input" id="cf_password"
-                                       placeholder="Min. 8 characters" minlength="8"/>
-                                <button type="button" class="btn btn-outline-secondary"
-                                        onclick="togglePwd('cf_password',this)">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
                             <input type="email" class="form-control ov-input" id="cf_email" required
@@ -159,13 +142,61 @@
 
 <!-- ══════════════════ View / Detail Modal ══════════════════ -->
 <div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header" style="background:var(--ov-primary);color:#fff">
                 <h5 class="modal-title"><i class="fas fa-user me-2"></i>Customer Details</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" id="viewModalBody">Loading…</div>
+            <div class="modal-body p-0">
+                <!-- Tabs -->
+                <ul class="nav nav-tabs px-3 pt-2" id="customerDetailTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="tab-profile-btn" onclick="switchTab('profile')">
+                            <i class="fas fa-user me-1"></i>Profile
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tab-reservations-btn" onclick="switchTab('reservations')">
+                            <i class="fas fa-calendar-alt me-1"></i>Reservation History
+                            <span class="badge bg-secondary ms-1" id="resHistoryCount"></span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="tab-loyalty-btn" onclick="switchTab('loyalty')">
+                            <i class="fas fa-star me-1"></i>Loyalty
+                        </button>
+                    </li>
+                </ul>
+                <!-- Profile Tab -->
+                <div id="tab-profile" class="p-3">
+                    <div class="text-center mb-3">
+                        <div class="mx-auto mb-2" style="width:60px;height:60px;border-radius:50%;background:var(--ov-primary);color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center" id="vm-avatar"></div>
+                        <h5 class="mb-0" id="vm-name"></h5>
+                        <small class="text-muted" id="vm-username"></small>
+                    </div>
+                    <table class="table table-sm">
+                        <tr><th style="width:40%">Customer ID</th><td><code id="vm-id"></code></td></tr>
+                        <tr><th>Email</th><td id="vm-email"></td></tr>
+                        <tr><th>Phone</th><td id="vm-phone"></td></tr>
+                        <tr><th>Address</th><td id="vm-address"></td></tr>
+                        <tr><th>Loyalty Points</th><td><span class="badge bg-warning text-dark" id="vm-pts"></span></td></tr>
+                        <tr><th>Status</th><td id="vm-status"></td></tr>
+                    </table>
+                </div>
+                <!-- Reservations Tab -->
+                <div id="tab-reservations" class="p-3 d-none">
+                    <div id="resHistoryBody">
+                        <div class="text-center py-4"><div class="ov-spinner mx-auto"></div><br/><small class="text-muted">Loading reservations…</small></div>
+                    </div>
+                </div>
+                <!-- Loyalty Tab -->
+                <div id="tab-loyalty" class="p-3 d-none">
+                    <div id="loyaltyBody">
+                        <div class="text-center py-4"><div class="ov-spinner mx-auto"></div></div>
+                    </div>
+                </div>
+            </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-ocean" id="editFromViewBtn">
@@ -220,7 +251,7 @@ function debounceSearch(val) {
 function renderTable(customers) {
     const tbody = document.getElementById('customerTableBody');
     if (!customers.length) {
-        tbody.innerHTML = `<tr><td colspan="7">
+        tbody.innerHTML = `<tr><td colspan="6">
             <div class="empty-state"><i class="fas fa-users"></i>
             <h5>No customers found</h5>
             <p>Add a new customer to get started.</p></div></td></tr>`;
@@ -239,7 +270,6 @@ function renderTable(customers) {
                     </div>
                 </div>
             </td>
-            <td>${c.username}</td>
             <td>${c.email}</td>
             <td>${c.phone || '—'}</td>
             <td class="text-center"><span class="badge bg-warning text-dark">${c.loyaltyPoints}</span></td>
@@ -269,10 +299,6 @@ function openCreateModal() {
         '<i class="fas fa-user-plus me-2"></i>New Customer';
     document.getElementById('customerForm').reset();
     document.getElementById('editCustomerId').value = '';
-    document.getElementById('usernameRow').style.display = '';
-    document.getElementById('passwordRow').style.display = '';
-    document.getElementById('cf_username').required = true;
-    document.getElementById('cf_password').required = true;
 }
 
 // ── Edit ──────────────────────────────────────────────────
@@ -287,11 +313,6 @@ function editCustomer(id) {
     document.getElementById('cf_email').value      = c.email     || '';
     document.getElementById('cf_phone').value      = c.phone     || '';
     document.getElementById('cf_address').value    = c.address   || '';
-    // hide username/password for edits
-    document.getElementById('usernameRow').style.display = 'none';
-    document.getElementById('passwordRow').style.display = 'none';
-    document.getElementById('cf_username').required = false;
-    document.getElementById('cf_password').required = false;
     bootstrap.Modal.getOrCreateInstance(document.getElementById('customerModal')).show();
     bootstrap.Modal.getInstance(document.getElementById('viewModal'))?.hide();
 }
@@ -310,10 +331,6 @@ async function saveCustomer(e) {
         phone:     document.getElementById('cf_phone').value,
         address:   document.getElementById('cf_address').value,
     };
-    if (!id) {
-        body.username = document.getElementById('cf_username').value;
-        body.password = document.getElementById('cf_password').value;
-    }
 
     const isCreate = !id;
     const res = await api(isCreate ? '/api/customers' : `/api/customers/${id}`, {
@@ -333,27 +350,127 @@ async function saveCustomer(e) {
 }
 
 // ── View ──────────────────────────────────────────────────
+let currentViewCustomerId = null;
+
+function switchTab(tab) {
+    ['profile','reservations','loyalty'].forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('d-none', t !== tab);
+        document.getElementById(`tab-${t}-btn`).classList.toggle('active', t === tab);
+    });
+}
+
 function viewCustomer(id) {
     const c = allCustomers.find(x => x.id === id);
     if (!c) return;
-    document.getElementById('viewModalBody').innerHTML = `
-        <div class="text-center mb-3">
-            <div class="mx-auto mb-2" style="width:60px;height:60px;border-radius:50%;background:var(--ov-primary);color:#fff;font-size:1.5rem;display:flex;align-items:center;justify-content:center">
-                ${(c.firstName?.[0]||'') + (c.lastName?.[0]||'')}
-            </div>
-            <h5 class="mb-0">${c.firstName} ${c.lastName}</h5>
-            <small class="text-muted">@${c.username}</small>
-        </div>
-        <table class="table table-sm">
-            <tr><th style="width:40%">Customer ID</th><td><code>${c.id}</code></td></tr>
-            <tr><th>Email</th><td>${c.email}</td></tr>
-            <tr><th>Phone</th><td>${c.phone || '—'}</td></tr>
-            <tr><th>Address</th><td>${c.address || '—'}</td></tr>
-            <tr><th>Loyalty Points</th><td><span class="badge bg-warning text-dark">${c.loyaltyPoints}</span></td></tr>
-            <tr><th>Status</th><td><span class="badge-status ${c.active ? 'badge-confirmed' : 'badge-cancelled'}">${c.active ? 'Active' : 'Inactive'}</span></td></tr>
-        </table>`;
+    currentViewCustomerId = id;
+
+    // Populate profile tab
+    const initials = (c.firstName?.[0]||'') + (c.lastName?.[0]||'');
+    document.getElementById('vm-avatar').textContent  = initials;
+    document.getElementById('vm-name').textContent    = `${c.firstName} ${c.lastName}`;
+    document.getElementById('vm-username').textContent= '';
+    document.getElementById('vm-id').textContent      = c.id;
+    document.getElementById('vm-email').textContent   = c.email;
+    document.getElementById('vm-phone').textContent   = c.phone || '—';
+    document.getElementById('vm-address').textContent = c.address || '—';
+    document.getElementById('vm-pts').textContent     = c.loyaltyPoints;
+    document.getElementById('vm-status').innerHTML    = `<span class="badge-status ${c.active ? 'badge-confirmed' : 'badge-cancelled'}">${c.active ? 'Active' : 'Inactive'}</span>`;
+
+    // Reset to profile tab
+    switchTab('profile');
+    document.getElementById('resHistoryCount').textContent = '';
+    document.getElementById('resHistoryBody').innerHTML    =
+        '<div class="text-center py-4"><div class="ov-spinner mx-auto"></div><br/><small class="text-muted">Loading…</small></div>';
+    document.getElementById('loyaltyBody').innerHTML       =
+        '<div class="text-center py-4"><div class="ov-spinner mx-auto"></div></div>';
+
     document.getElementById('editFromViewBtn').onclick = () => editCustomer(id);
     bootstrap.Modal.getOrCreateInstance(document.getElementById('viewModal')).show();
+
+    // Load reservation history and loyalty in background
+    loadCustomerReservations(id);
+    loadCustomerLoyalty(id, c.loyaltyPoints);
+}
+
+async function loadCustomerReservations(customerId) {
+    try {
+        const res = await api(`/api/reservations/customer/${customerId}`);
+        if (!res?.ok) throw new Error('Failed');
+        const reservations = await res.json();
+        document.getElementById('resHistoryCount').textContent = reservations.length;
+
+        if (!reservations.length) {
+            document.getElementById('resHistoryBody').innerHTML =
+                '<div class="text-center py-4 text-muted"><i class="fas fa-calendar-times fa-2x mb-2"></i><br/>No reservations found</div>';
+            return;
+        }
+
+        document.getElementById('resHistoryBody').innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-sm ov-table mb-0">
+                    <thead><tr>
+                        <th>Reservation #</th><th>Room</th><th>Check-In</th><th>Check-Out</th><th>Status</th><th></th>
+                    </tr></thead>
+                    <tbody>
+                        ${reservations.map(r => `<tr>
+                            <td><a href="${CTX}/reservations/view/${r.id}" target="_blank" class="fw-semibold text-primary">${r.reservationNumber || '—'}</a></td>
+                            <td>${r.roomNumber || r.roomId || '—'}</td>
+                            <td>${r.checkInDate ? new Date(r.checkInDate).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</td>
+                            <td>${r.checkOutDate ? new Date(r.checkOutDate).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—'}</td>
+                            <td>${statusBadge(r.status)}</td>
+                            <td><a href="${CTX}/reservations/view/${r.id}" target="_blank" class="btn btn-xs btn-outline-primary" style="font-size:.75rem;padding:.15rem .4rem"><i class="fas fa-eye"></i></a></td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+    } catch {
+        document.getElementById('resHistoryBody').innerHTML =
+            '<div class="text-center py-3 text-danger"><i class="fas fa-exclamation-circle me-1"></i>Failed to load reservations</div>';
+    }
+}
+
+async function loadCustomerLoyalty(customerId, currentPoints) {
+    try {
+        const [balRes, histRes] = await Promise.all([
+            api(`/api/loyalty/balance/${customerId}`),
+            api(`/api/loyalty/history/${customerId}`)
+        ]);
+        const bal  = balRes?.ok  ? await balRes.json()  : null;
+        const hist = histRes?.ok ? await histRes.json() : [];
+
+        const tierColor = { BRONZE:'#cd7f32', SILVER:'#aaa', GOLD:'#ffc107', PLATINUM:'#7b68ee' };
+        const tierName  = bal?.tier || 'BRONZE';
+        const color     = tierColor[tierName] || '#ffc107';
+
+        document.getElementById('loyaltyBody').innerHTML = `
+            <div class="d-flex align-items-center gap-3 mb-3 p-3 rounded-3" style="background:#fff8e1;border:1.5px solid #ffe082">
+                <div style="width:48px;height:48px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center">
+                    <i class="fas fa-crown text-white fa-lg"></i>
+                </div>
+                <div>
+                    <div class="fw-bold" style="font-size:1.1rem">${(bal?.balance ?? currentPoints).toLocaleString()} Points</div>
+                    <div class="text-muted small">${bal?.tierDisplayName || tierName} Tier · ${bal?.benefits || ''}</div>
+                    ${bal?.nextTier && bal.pointsToNextTier > 0 ? `<div class="text-muted" style="font-size:.78rem">${bal.pointsToNextTier} pts to ${bal.nextTier}</div>` : ''}
+                </div>
+            </div>
+            ${hist.length ? `
+            <div class="fw-semibold mb-2"><i class="fas fa-history me-1 text-muted"></i>Recent Transactions</div>
+            <div style="max-height:220px;overflow-y:auto">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Date</th><th>Description</th><th class="text-end">Points</th></tr></thead>
+                    <tbody>
+                        ${hist.slice(0,20).map(t => `<tr>
+                            <td style="font-size:.78rem">${t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB') : '—'}</td>
+                            <td style="font-size:.78rem">${t.description || t.transactionType}</td>
+                            <td class="text-end fw-bold ${t.points > 0 ? 'text-success' : 'text-danger'}" style="font-size:.78rem">${t.points > 0 ? '+' : ''}${t.points}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>` : '<div class="text-muted text-center py-3">No loyalty transactions yet</div>'}`;
+    } catch {
+        document.getElementById('loyaltyBody').innerHTML =
+            '<div class="text-center py-3 text-danger">Failed to load loyalty data</div>';
+    }
 }
 
 // ── Deactivate ────────────────────────────────────────────
@@ -372,11 +489,6 @@ function promptDeactivate(id, name) {
     bootstrap.Modal.getOrCreateInstance(document.getElementById('deactivateModal')).show();
 }
 
-function togglePwd(id, btn) {
-    const inp = document.getElementById(id);
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-    btn.querySelector('i').className = inp.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
-}
 
 // ── Init ──────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => loadCustomers());

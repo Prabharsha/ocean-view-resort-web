@@ -19,9 +19,6 @@ import java.util.List;
 
 /**
  * REST controller for bill management operations.
- *
- * <p>Handles bill generation, viewing, discount application, payment
- * recording, and PDF generation.</p>
  */
 @RestController
 @RequestMapping("/api/bills")
@@ -32,80 +29,77 @@ public class BillController {
 
     private final BillService billService;
 
-    /**
-     * Returns all bills.
-     */
+    /** Returns all bills. */
     @GetMapping
     @Operation(summary = "All Bills", description = "Get all bills")
     public ResponseEntity<List<BillDTO>> getAllBills() {
-        List<BillDTO> bills = billService.getAllBills();
-        return ResponseEntity.ok(bills);
+        return ResponseEntity.ok(billService.getAllBills());
     }
 
     /**
-     * Generates a bill for a reservation.
+     * Generates a bill for a reservation, or returns the existing one if already generated.
      */
     @PostMapping("/generate/{reservationId}")
-    @Operation(summary = "Generate Bill", description = "Generate a bill for a reservation")
+    @Operation(summary = "Generate Bill", description = "Generate or retrieve existing bill for a reservation")
     public ResponseEntity<BillDTO> generateBill(@PathVariable String reservationId) {
         log.info("Generating bill for reservation: {}", reservationId);
-        BillDTO bill = billService.generateBill(reservationId);
+        BillDTO bill = billService.generateOrGetBill(reservationId);
         return ResponseEntity.status(HttpStatus.CREATED).body(bill);
     }
 
     /**
-     * Returns a bill by its UUID.
+     * Returns a bill by its bill ID (UUID or seeded ID like b-001).
+     * Falls back to reservation-ID lookup if not found by bill ID.
      */
     @GetMapping("/{id}")
-    @Operation(summary = "Get Bill", description = "Get a bill by its ID")
+    @Operation(summary = "Get Bill", description = "Get a bill by bill ID or reservation ID")
     public ResponseEntity<BillDTO> getBill(@PathVariable String id) {
-        // Retrieve by reservation ID as the primary lookup
-        BillDTO bill = billService.findBillByReservationId(id);
-        return ResponseEntity.ok(bill);
+        // Try direct bill lookup first
+        try {
+            BillDTO bill = billService.findBillById(id);
+            return ResponseEntity.ok(bill);
+        } catch (Exception e) {
+            // Not found by bill id — try as reservation id
+        }
+        try {
+            BillDTO bill = billService.findBillByReservationId(id);
+            return ResponseEntity.ok(bill);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    /**
-     * Returns a bill by reservation ID.
-     */
+    /** Returns a bill by its associated reservation ID. */
     @GetMapping("/reservation/{reservationId}")
-    @Operation(summary = "Get Bill by Reservation",
-            description = "Get a bill by its reservation ID")
+    @Operation(summary = "Get Bill by Reservation", description = "Get a bill by reservation ID")
     public ResponseEntity<BillDTO> getBillByReservation(@PathVariable String reservationId) {
-        BillDTO bill = billService.findBillByReservationId(reservationId);
-        return ResponseEntity.ok(bill);
+        return ResponseEntity.ok(billService.findBillByReservationId(reservationId));
     }
 
-    /**
-     * Applies a discount to a bill.
-     */
+    /** Applies a percentage discount to a bill. */
     @PostMapping("/{id}/discount")
     @Operation(summary = "Apply Discount", description = "Apply a percentage discount to a bill")
     public ResponseEntity<BillDTO> applyDiscount(
             @PathVariable String id,
             @Valid @RequestBody DiscountRequest request) {
         log.info("Applying {}% discount to bill: {}", request.getDiscountPercent(), id);
-        BillDTO bill = billService.applyDiscount(id, request.getDiscountPercent());
-        return ResponseEntity.ok(bill);
+        return ResponseEntity.ok(billService.applyDiscount(id, request.getDiscountPercent()));
     }
 
-    /**
-     * Downloads a bill as PDF.
-     */
+    /** Downloads a bill as PDF. */
     @GetMapping("/{id}/pdf")
     @Operation(summary = "Download PDF", description = "Download bill as PDF")
     public ResponseEntity<byte[]> downloadPDF(@PathVariable String id) {
         byte[] pdf = billService.generateBillPDF(id);
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment", "bill-" + id + ".pdf");
         headers.setContentLength(pdf.length);
-
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
     }
 
     /**
-     * Records a payment and marks the bill accordingly.
+     * Records a payment against a bill and updates its payment status.
      */
     @PutMapping("/{id}/pay")
     @Operation(summary = "Pay Bill", description = "Record a payment against a bill")
@@ -117,13 +111,10 @@ public class BillController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Returns all unpaid bills.
-     */
+    /** Returns all unpaid bills. */
     @GetMapping("/unpaid")
     @Operation(summary = "Unpaid Bills", description = "Get all unpaid bills")
     public ResponseEntity<List<BillDTO>> getUnpaidBills() {
-        List<BillDTO> bills = billService.getUnpaidBills();
-        return ResponseEntity.ok(bills);
+        return ResponseEntity.ok(billService.getUnpaidBills());
     }
 }

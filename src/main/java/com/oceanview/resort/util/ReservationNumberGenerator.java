@@ -1,5 +1,9 @@
 package com.oceanview.resort.util;
 
+import com.oceanview.resort.repository.ReservationRepository;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.Year;
@@ -36,9 +40,27 @@ import java.util.concurrent.atomic.AtomicLong;
  * </ul>
  */
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class ReservationNumberGenerator {
 
+    private final ReservationRepository reservationRepository;
+
     private final AtomicLong sequence = new AtomicLong(0);
+
+    /**
+     * Initialises the sequence counter from the database on startup.
+     * This prevents duplicate-key errors after an application restart
+     * by resuming from the highest sequence number already persisted.
+     */
+    @PostConstruct
+    public void initFromDatabase() {
+        int currentYear = Year.now().getValue();
+        long maxSeq = reservationRepository.findMaxSequenceByYear(currentYear);
+        sequence.set(maxSeq);
+        log.info("ReservationNumberGenerator initialised: next number will be OVR-{}-{}",
+                 currentYear, String.format("%06d", maxSeq + 1));
+    }
 
     /**
      * Generates the next unique reservation number.

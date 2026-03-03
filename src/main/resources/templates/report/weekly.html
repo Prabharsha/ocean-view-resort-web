@@ -138,8 +138,8 @@ function renderWeek() {
 
     const inRange = d => { const dt = new Date(d); return dt >= start && dt <= end; };
     const filtered = allRes.filter(r => inRange(r.checkInDate || r.createdAt));
-    const weekBills = allBi.filter(b => inRange(b.billDate || b.createdAt));
-    const revenue = weekBills.reduce((s, b) => s + (b.totalAmount || b.total || 0), 0);
+    const weekBills = allBi.filter(b => inRange(b.generatedAt || b.billDate || b.createdAt));
+    const revenue = weekBills.reduce((s, b) => s + Number(b.totalAmount || 0), 0);
 
     document.getElementById('wBookings').textContent = filtered.length;
     document.getElementById('wRevenue').textContent = formatCurrency(revenue);
@@ -156,9 +156,11 @@ function renderWeek() {
         bookingsPerDay[idx]++;
     });
     weekBills.forEach(b => {
-        const d = new Date(b.billDate || b.createdAt);
+        const raw = b.generatedAt || b.billDate || b.createdAt;
+        if (!raw) return;
+        const d = new Date(raw);
         const idx = (d.getDay() + 6) % 7;
-        revPerDay[idx] += (b.totalAmount || b.total || 0);
+        revPerDay[idx] += Number(b.totalAmount || 0);
     });
 
     if (wDayChartObj) wDayChartObj.destroy();

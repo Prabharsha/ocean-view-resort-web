@@ -197,17 +197,17 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Payment Method</label>
                         <select class="form-select ov-input" id="payMethod" required>
-                            <option value="CREDIT_CARD">Credit Card</option>
-                            <option value="DEBIT_CARD">Debit Card</option>
                             <option value="CASH">Cash</option>
-                            <option value="BANK_TRANSFER">Bank Transfer</option>
+                            <option value="CARD">Card (Credit / Debit)</option>
+                            <option value="ONLINE">Online Transfer</option>
+                            <option value="POINTS">Loyalty Points</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Reference</label>
                         <input type="text" class="form-control ov-input" id="payRef" placeholder="Transaction reference"/>
                     </div>
-                    <button type="submit" class="btn btn-ocean w-100">
+                    <button type="submit" id="payConfirmBtn" class="btn btn-ocean w-100">
                         <i class="fas fa-check-circle me-2"></i>Confirm Payment
                     </button>
                 </form>
@@ -223,6 +223,15 @@ let bill = null;
 const billId = window.location.pathname.replace(CTX, '').replace('/bills/', '');
 
 document.addEventListener('DOMContentLoaded', loadBill);
+
+// Reset Confirm Payment button whenever the modal is closed for any reason
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('paymentModal').addEventListener('hidden.bs.modal', () => {
+        const btn = document.getElementById('payConfirmBtn');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Confirm Payment';
+    });
+});
 
 async function loadBill() {
     try {
@@ -242,34 +251,34 @@ async function loadBill() {
 
 function renderBill() {
     // Guest info
-    document.getElementById('billGuest').textContent = bill.guestName || bill.customerName || 'Guest';
-    document.getElementById('billGuestEmail').textContent = bill.guestEmail || bill.email || '';
-    document.getElementById('billGuestPhone').textContent = bill.guestPhone || bill.phone || '';
+    document.getElementById('billGuest').textContent      = bill.guestName || 'Guest';
+    document.getElementById('billGuestEmail').textContent = bill.guestEmail || '';
+    document.getElementById('billGuestPhone').textContent = bill.guestPhone || '';
 
     // Bill meta
-    document.getElementById('billNumber').textContent = bill.billNumber || `INV-${bill.id}`;
-    document.getElementById('billDate').textContent = formatDate(bill.billDate || bill.createdAt);
+    document.getElementById('billNumber').textContent = `INV-${bill.id}`;
+    document.getElementById('billDate').textContent   = formatDate(bill.generatedAt);
 
-    const status = bill.paymentStatus || bill.status || 'PENDING';
+    const status = bill.paymentStatus || 'UNPAID';
     const el = document.getElementById('billStatus');
-    el.textContent = status;
-    el.className = 'badge-status ' + (status === 'PAID' ? 'badge-confirmed' : status === 'CANCELLED' ? 'badge-cancelled' : 'badge-pending');
+    el.textContent  = status;
+    el.className    = 'badge-status ' + (status === 'PAID' ? 'badge-confirmed' : status === 'PARTIALLY_PAID' ? 'badge-pending' : 'badge-cancelled');
 
-    // Show pay button if not paid
-    if (status !== 'PAID' && status !== 'CANCELLED') {
+    // Show pay button if not fully paid
+    if (status !== 'PAID') {
         document.getElementById('payBtn').style.display = '';
     }
 
     // Reservation
-    document.getElementById('billResNum').textContent = bill.reservationNumber || '—';
-    document.getElementById('billRoom').textContent = bill.roomNumber ? `Room ${bill.roomNumber}` : '—';
-    document.getElementById('billCheckin').textContent = formatDate(bill.checkInDate);
-    document.getElementById('billCheckout').textContent = formatDate(bill.checkOutDate);
+    document.getElementById('billResNum').textContent    = bill.reservationNumber || '—';
+    document.getElementById('billRoom').textContent      = bill.roomNumber ? `Room ${bill.roomNumber}` : '—';
+    document.getElementById('billCheckin').textContent   = formatDate(bill.checkInDate);
+    document.getElementById('billCheckout').textContent  = formatDate(bill.checkOutDate);
 
     // Charges
-    const rate = bill.roomRate || bill.ratePerNight || 0;
-    const nights = bill.numberOfNights || bill.nights || 1;
-    const tbody = document.getElementById('chargesBody');
+    const rate   = Number(bill.roomRate   || 0);
+    const nights = Number(bill.numNights  || 1);
+    const tbody  = document.getElementById('chargesBody');
     tbody.innerHTML = `
         <tr>
             <td>Room Accommodation (${bill.roomType || 'Standard'})</td>
@@ -278,47 +287,41 @@ function renderBill() {
             <td class="text-end">${formatCurrency(rate * nights)}</td>
         </tr>`;
 
-    // Additional charges
-    if (bill.additionalCharges && bill.additionalCharges.length) {
-        bill.additionalCharges.forEach(c => {
-            tbody.innerHTML += `<tr><td>${c.description}</td><td class="text-end">1</td><td class="text-end">${formatCurrency(c.amount)}</td><td class="text-end">${formatCurrency(c.amount)}</td></tr>`;
-        });
-    }
-
     // Totals
-    const sub = bill.subTotal || bill.amount || (rate * nights);
-    const disc = bill.discountAmount || bill.discount || 0;
-    const tax = bill.taxAmount || bill.tax || 0;
-    const total = bill.totalAmount || bill.total || 0;
-    document.getElementById('subTotal').textContent = formatCurrency(sub);
-    document.getElementById('taxAmount').textContent = formatCurrency(tax);
+    const sub   = Number(bill.subtotal       || 0);
+    const disc  = Number(bill.discountAmount || 0);
+    const tax   = Number(bill.taxAmount      || 0);
+    const total = Number(bill.totalAmount    || 0);
+    document.getElementById('subTotal').textContent    = formatCurrency(sub);
+    document.getElementById('taxAmount').textContent   = formatCurrency(tax);
     document.getElementById('totalAmount').textContent = formatCurrency(total);
 
     if (disc > 0) {
         document.getElementById('discountRow').style.display = '';
-        document.getElementById('discountAmt').textContent = '-' + formatCurrency(disc);
+        document.getElementById('discountAmt').textContent   = '-' + formatCurrency(disc);
     }
 
-    // Payment summary
-    const paid = bill.paidAmount || bill.amountPaid || 0;
-    const balance = total - paid;
-    document.getElementById('payTotal').textContent = formatCurrency(total);
-    document.getElementById('payPaid').textContent = formatCurrency(paid);
-    document.getElementById('payBalance').textContent = formatCurrency(Math.max(0, balance));
+    // Payment summary — sum payments for "paid" amount
+    const payments = bill.payments || [];
+    const paid     = payments.reduce((s, p) => s + Number(p.amountPaid || 0), 0);
+    const balance  = Math.max(0, total - paid);
+    document.getElementById('payTotal').textContent   = formatCurrency(total);
+    document.getElementById('payPaid').textContent    = formatCurrency(paid);
+    document.getElementById('payBalance').textContent = formatCurrency(balance);
     document.getElementById('payProgress').style.width = (total > 0 ? Math.min(100, (paid / total * 100)) : 0) + '%';
-    document.getElementById('payAmount').value = Math.max(0, balance).toFixed(2);
+    document.getElementById('payAmount').value = balance.toFixed(2);
 
     // Payment history
-    const payments = bill.payments || [];
     const hist = document.getElementById('paymentHistory');
     if (payments.length) {
         hist.innerHTML = payments.map(p => `
             <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
                 <div>
-                    <strong>${formatCurrency(p.amount)}</strong>
-                    <small class="text-muted d-block">${p.paymentMethod || p.method || 'Card'}</small>
+                    <strong>${formatCurrency(p.amountPaid)}</strong>
+                    <small class="text-muted d-block">${p.paymentMethod || '—'}</small>
+                    ${p.transactionReference ? `<small class="text-muted d-block">Ref: ${p.transactionReference}</small>` : ''}
                 </div>
-                <small class="text-muted">${formatDate(p.paymentDate || p.date)}</small>
+                <small class="text-muted">${formatDate(p.paymentDate)}</small>
             </div>`).join('');
     } else {
         hist.innerHTML = '<p class="text-muted text-center mb-0">No payments recorded</p>';
@@ -333,11 +336,14 @@ function showPaymentModal() {
 
 async function recordPayment(e) {
     e.preventDefault();
+    const btn = document.getElementById('payConfirmBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Processing...';
     try {
-        const res = await api(`/api/bills/${billId}/payments`, {
-            method: 'POST',
+        const res = await api(`/api/bills/${billId}/pay`, {
+            method: 'PUT',
             body: {
-                amount: parseFloat(document.getElementById('payAmount').value),
+                amountPaid: parseFloat(document.getElementById('payAmount').value),
                 paymentMethod: document.getElementById('payMethod').value,
                 transactionReference: document.getElementById('payRef').value
             }
@@ -350,18 +356,22 @@ async function recordPayment(e) {
             const err = await res.json().catch(() => ({}));
             showToast(err.message || 'Failed to record payment', 'error');
         }
-    } catch (ex) { showToast('Network error', 'error'); }
+    } catch (ex) {
+        showToast('Network error: ' + ex.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Confirm Payment';
+    }
 }
 
 async function applyDiscount(e) {
     e.preventDefault();
     const pct = document.getElementById('discountPct').value;
-    const reason = document.getElementById('discountReason').value;
     if (!pct || pct <= 0) { showToast('Enter a valid discount', 'error'); return; }
     try {
         const res = await api(`/api/bills/${billId}/discount`, {
             method: 'POST',
-            body: { percentage: parseFloat(pct), reason: reason }
+            body: { discountPercent: parseFloat(pct) }
         });
         if (res?.ok) { showToast('Discount applied!', 'success'); loadBill(); }
         else showToast('Failed to apply discount', 'error');

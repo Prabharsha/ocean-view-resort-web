@@ -233,22 +233,6 @@
                                    placeholder="e.g. Silva"/>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control ov-input" id="rc_username" required
-                                   minlength="3" placeholder="e.g. john_silva"/>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="password" class="form-control ov-input" id="rc_password"
-                                       required minlength="8" placeholder="Min. 8 characters"/>
-                                <button type="button" class="btn btn-outline-secondary"
-                                        onclick="togglePwd('rc_password',this)">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
                             <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
                             <input type="email" class="form-control ov-input" id="rc_email" required
                                    placeholder="e.g. john@email.com"/>
@@ -448,8 +432,6 @@ async function registerNewCustomer(e) {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering...';
 
     const body = {
-        username:  document.getElementById('rc_username').value,
-        password:  document.getElementById('rc_password').value,
         firstName: document.getElementById('rc_firstName').value,
         lastName:  document.getElementById('rc_lastName').value,
         email:     document.getElementById('rc_email').value,
@@ -472,11 +454,6 @@ async function registerNewCustomer(e) {
     btn.innerHTML = '<i class="fas fa-user-check me-2"></i>Register &amp; Select';
 }
 
-function togglePwd(id, btn) {
-    const inp = document.getElementById(id);
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-    btn.querySelector('i').className = inp.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
-}
 
 // ── Room availability ─────────────────────────────────────
 async function checkAvailability() {
@@ -591,7 +568,7 @@ async function submitReservation(e) {
         if (res?.ok) {
             const data = await res.json();
             showToast('Reservation created successfully!', 'success');
-            setTimeout(() => window.location.href = CTX + '/reservations/view/' + data.id, 800);
+            setTimeout(() => window.location.href = CTX + '/reservations/view/' + data.reservationNumber, 800);
         } else {
             const err = await res.json().catch(() => ({}));
             showToast(err.message || 'Failed to create reservation', 'error');

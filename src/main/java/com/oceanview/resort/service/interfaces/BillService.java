@@ -13,6 +13,14 @@ import java.util.List;
 public interface BillService {
 
     /**
+     * Generates a bill for a reservation, or returns the existing bill if one already exists.
+     *
+     * @param reservationId the reservation UUID
+     * @return the generated or existing bill DTO
+     */
+    BillDTO generateOrGetBill(String reservationId);
+
+    /**
      * Generates a bill for a completed or checked-out reservation.
      *
      * @param reservationId the reservation UUID
@@ -27,6 +35,14 @@ public interface BillService {
      * @return the bill DTO
      */
     BillDTO findBillByReservationId(String reservationId);
+
+    /**
+     * Finds a bill by its own UUID.
+     *
+     * @param billId the bill UUID
+     * @return the bill DTO
+     */
+    BillDTO findBillById(String billId);
 
     /**
      * Applies a percentage discount to a bill.

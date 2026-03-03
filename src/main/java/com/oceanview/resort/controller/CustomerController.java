@@ -53,23 +53,35 @@ public class CustomerController {
 
     /**
      * Creates (registers) a new customer.
-     * Staff/Manager can register guests directly from the reservation wizard.
+     * Username is auto-generated from firstName+lastName if not provided.
+     * Password defaults to a system value since customers cannot log in.
      */
     @PostMapping
     @Operation(summary = "Create Customer", description = "Register a new customer")
     public ResponseEntity<CustomerDTO> createCustomer(
             @Valid @RequestBody Map<String, String> body) {
 
+        String firstName = body.getOrDefault("firstName", "guest");
+        String lastName  = body.getOrDefault("lastName",  "user");
+
+        // Auto-generate a unique username: firstname.lastname + 4-digit random
+        String baseUsername = (firstName + "." + lastName)
+                .toLowerCase()
+                .replaceAll("[^a-z0-9.]", "")
+                + String.format("%04d", (int)(Math.random() * 9000) + 1000);
+
         CustomerDTO dto = CustomerDTO.builder()
-                .username(body.get("username"))
-                .firstName(body.get("firstName"))
-                .lastName(body.get("lastName"))
+                .username(body.getOrDefault("username", baseUsername))
+                .firstName(firstName)
+                .lastName(lastName)
                 .email(body.get("email"))
                 .phone(body.get("phone"))
                 .address(body.get("address"))
                 .build();
 
-        String password = body.getOrDefault("password", "Customer@123");
+        // Customers cannot log in — use a secure random internal password
+        String password = body.getOrDefault("password",
+                "Cust@" + Long.toHexString(Double.doubleToLongBits(Math.random())));
         CustomerDTO created = customerService.createCustomer(dto, password);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

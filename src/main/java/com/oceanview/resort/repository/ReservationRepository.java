@@ -45,6 +45,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, String
     Optional<Reservation> findByReservationNumber(String reservationNumber);
 
     /**
+     * Finds all reservations ordered by creation date descending (newest first).
+     */
+    List<Reservation> findAllByOrderByCreatedAtDesc();
+
+    /**
      * Finds all reservations for a specific customer.
      */
     List<Reservation> findByCustomerId(String customerId);
@@ -101,4 +106,13 @@ public interface ReservationRepository extends JpaRepository<Reservation, String
      */
     @Query("SELECT COUNT(r) FROM Reservation r WHERE r.reservationNumber LIKE CONCAT('OVR-', :year, '-%')")
     long countByYear(@Param("year") int year);
+
+    /**
+     * Returns the highest sequence number already used for a given year,
+     * or 0 if no reservations exist for that year.
+     * Used to seed the in-memory counter on application startup.
+     */
+    @Query("SELECT COALESCE(MAX(CAST(SUBSTRING(r.reservationNumber, 10) AS long)), 0) " +
+           "FROM Reservation r WHERE r.reservationNumber LIKE CONCAT('OVR-', :year, '-%')")
+    long findMaxSequenceByYear(@Param("year") int year);
 }

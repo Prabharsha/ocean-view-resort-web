@@ -2,6 +2,8 @@ package com.oceanview.resort.dto;
 
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 /**
  * Data Transfer Object for Customer entity.
  * Extends user fields with customer-specific attributes.
@@ -21,5 +23,6 @@ public class CustomerDTO {
     private String address;
     private int loyaltyPoints;
     private boolean active;
+    private LocalDateTime createdAt;
 }
 

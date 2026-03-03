@@ -43,4 +43,10 @@ public interface CustomerRepository extends JpaRepository<Customer, String> {
      */
     @Query("SELECT c FROM Customer c WHERE c.isActive = true ORDER BY c.firstName ASC")
     List<Customer> findAllActiveOrderByFirstName();
+
+    /**
+     * Finds all active customers ordered by creation date descending (newest first).
+     */
+    @Query("SELECT c FROM Customer c WHERE c.isActive = true ORDER BY c.createdAt DESC")
+    List<Customer> findAllActiveOrderByCreatedAtDesc();
 }

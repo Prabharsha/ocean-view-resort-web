@@ -30,7 +30,7 @@ public class RoomServiceImpl implements RoomService {
     @Override
     public List<Room> findAllRooms() {
         log.debug("Finding all rooms");
-        return roomRepository.findAll();
+        return roomRepository.findAllByOrderByCreatedAtDesc();
     }
 
     /** {@inheritDoc} */

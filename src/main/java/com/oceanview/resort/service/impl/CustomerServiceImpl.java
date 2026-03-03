@@ -31,7 +31,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public List<CustomerDTO> findAllCustomers() {
-        return customerRepository.findAllActiveOrderByFirstName()
+        return customerRepository.findAllActiveOrderByCreatedAtDesc()
                 .stream().map(this::toDTO).collect(Collectors.toList());
     }
 
@@ -54,15 +54,18 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerDTO createCustomer(CustomerDTO dto, String rawPassword) {
         log.info("Creating customer: {}", dto.getUsername());
 
-        if (userRepository.existsByUsername(dto.getUsername())) {
-            throw new IllegalStateException("Username already taken: " + dto.getUsername());
+        // Ensure unique username
+        String username = dto.getUsername();
+        if (userRepository.existsByUsername(username)) {
+            username = username + String.format("%04d", (int)(Math.random() * 9000) + 1000);
         }
+
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new IllegalStateException("Email already registered: " + dto.getEmail());
         }
 
         Customer customer = new Customer();
-        customer.setUsername(dto.getUsername());
+        customer.setUsername(username);
         customer.setPassword(passwordEncoder.encode(rawPassword));
         customer.setFirstName(dto.getFirstName());
         customer.setLastName(dto.getLastName());

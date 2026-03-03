@@ -51,6 +51,14 @@ public interface ReservationService {
     ReservationDTO findByReservationNumber(String reservationNumber);
 
     /**
+     * Finds a reservation by its UUID.
+     *
+     * @param id the reservation UUID
+     * @return the reservation DTO (including billId if a bill exists)
+     */
+    ReservationDTO findById(String id);
+
+    /**
      * Returns all reservations in the system.
      *
      * @return list of all reservation DTOs
@@ -82,6 +90,14 @@ public interface ReservationService {
      * @return the updated reservation DTO
      */
     ReservationDTO updateReservationStatus(String id, ReservationStatus status);
+
+    /**
+     * Confirms a reservation by its reservation number (PENDING → CONFIRMED).
+     *
+     * @param reservationNumber the reservation number (e.g. OVR-2026-000001)
+     * @return the updated reservation DTO
+     */
+    ReservationDTO confirmReservation(String reservationNumber);
 
     /**
      * Cancels a reservation.

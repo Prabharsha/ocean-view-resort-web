@@ -56,6 +56,17 @@ public class BillServiceImpl implements BillService {
     /** {@inheritDoc} */
     @Override
     @Transactional
+    public BillDTO generateOrGetBill(String reservationId) {
+        // Return existing bill if already generated
+        if (billRepository.existsByReservationId(reservationId)) {
+            return findBillByReservationId(reservationId);
+        }
+        return generateBill(reservationId);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    @Transactional
     public BillDTO generateBill(String reservationId) {
         log.info("Generating bill for reservation: {}", reservationId);
 
@@ -104,7 +115,48 @@ public class BillServiceImpl implements BillService {
         Bill bill = billRepository.findByReservationId(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "No bill found for reservation: " + reservationId));
-        return billMapper.toDTO(bill);
+        return enrichDTO(billMapper.toDTO(bill), bill);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public BillDTO findBillById(String billId) {
+        log.debug("Finding bill by id: {}", billId);
+        Bill bill = billRepository.findById(billId)
+                .orElseThrow(() -> new IllegalArgumentException("Bill not found: " + billId));
+        return enrichDTO(billMapper.toDTO(bill), bill);
+    }
+
+    /**
+     * Enriches a BillDTO with payment history and guest email from the
+     * customer entity (the mapper cannot access these due to lazy loading).
+     */
+    private BillDTO enrichDTO(BillDTO dto, Bill bill) {
+        // Populate guestEmail from customer
+        try {
+            if (bill.getReservation() != null && bill.getReservation().getCustomer() != null) {
+                dto.setGuestEmail(bill.getReservation().getCustomer().getEmail());
+            }
+        } catch (Exception ignored) {}
+
+        // Populate payments list
+        try {
+            List<PaymentDTO> paymentDTOs = paymentRepository.findByBillId(bill.getId())
+                    .stream()
+                    .map(p -> PaymentDTO.builder()
+                            .id(p.getId())
+                            .billId(bill.getId())
+                            .amountPaid(p.getAmountPaid())
+                            .paymentMethod(p.getPaymentMethod())
+                            .transactionReference(p.getTransactionReference())
+                            .paymentDate(p.getPaymentDate())
+                            .notes(p.getNotes())
+                            .build())
+                    .collect(Collectors.toList());
+            dto.setPayments(paymentDTOs);
+        } catch (Exception ignored) {}
+
+        return dto;
     }
 
     /** {@inheritDoc} */
@@ -249,7 +301,7 @@ public class BillServiceImpl implements BillService {
     @Override
     public List<BillDTO> getAllBills() {
         log.debug("Finding all bills");
-        return billRepository.findAll().stream()
+        return billRepository.findAllByOrderByGeneratedAtDesc().stream()
                 .map(billMapper::toDTO)
                 .collect(Collectors.toList());
     }

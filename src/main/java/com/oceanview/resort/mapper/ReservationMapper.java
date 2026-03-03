@@ -12,10 +12,12 @@ import org.mapstruct.Mapping;
 public interface ReservationMapper {
 
     @Mapping(source = "customer.id", target = "customerId")
+    @Mapping(source = "customer.fullName", target = "customerName")
     @Mapping(source = "room.id", target = "roomId")
     @Mapping(source = "staff.id", target = "staffId")
     @Mapping(source = "room.roomNumber", target = "roomNumber")
     @Mapping(source = "room.roomType", target = "roomType")
+    @Mapping(source = "bill.id", target = "billId")
     ReservationDTO toDTO(Reservation reservation);
 
     @Mapping(target = "customer", ignore = true)

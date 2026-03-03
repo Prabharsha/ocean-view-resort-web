@@ -91,6 +91,19 @@ public class LoggingReservationService implements ReservationService {
 
     /** {@inheritDoc} */
     @Override
+    public ReservationDTO findById(String id) {
+        log.info("[DECORATOR] >>> findById({})", id);
+        long start = System.currentTimeMillis();
+
+        ReservationDTO result = delegate.findById(id);
+
+        long elapsed = System.currentTimeMillis() - start;
+        log.info("[DECORATOR] <<< findById() completed in {}ms", elapsed);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public List<ReservationDTO> findAllReservations() {
         log.info("[DECORATOR] >>> findAllReservations()");
         long start = System.currentTimeMillis();
@@ -138,6 +151,19 @@ public class LoggingReservationService implements ReservationService {
 
         long elapsed = System.currentTimeMillis() - start;
         log.info("[DECORATOR] <<< updateReservationStatus() completed in {}ms", elapsed);
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ReservationDTO confirmReservation(String reservationNumber) {
+        log.info("[DECORATOR] >>> confirmReservation({})", reservationNumber);
+        long start = System.currentTimeMillis();
+
+        ReservationDTO result = delegate.confirmReservation(reservationNumber);
+
+        long elapsed = System.currentTimeMillis() - start;
+        log.info("[DECORATOR] <<< confirmReservation() completed in {}ms", elapsed);
         return result;
     }
 
