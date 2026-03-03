@@ -84,7 +84,7 @@
         const CTX = '/oceanview';
         const billId = new URLSearchParams(window.location.search).get('id') || window.location.pathname.split('/').pop();
 
-        function fmt(v) { return '£' + (Number(v)||0).toFixed(2); }
+        function fmt(v) { return 'LKR ' + (Number(v)||0).toFixed(2); }
         function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}); }
 
         async function load() {

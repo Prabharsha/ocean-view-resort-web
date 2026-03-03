@@ -116,7 +116,7 @@ function hideLoading() {
 
 /* ── Format Helpers ──────────────────────────────── */
 function formatCurrency(amount) {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount || 0);
+    return new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount || 0);
 }
 
 function formatDate(dateStr) {

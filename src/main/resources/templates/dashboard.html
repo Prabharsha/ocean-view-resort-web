@@ -37,7 +37,7 @@
                         <div>
                             <div class="stat-label">Total Reservations</div>
                             <div class="stat-value" id="statReservations">—</div>
-                            <div class="stat-trend up" id="statResTrend"><i class="fas fa-arrow-up me-1"></i>12% this month</div>
+                            <div class="stat-trend" id="statResTrend" style="color:var(--ov-gray)">this month</div>
                         </div>
                         <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
                     </div>
@@ -73,9 +73,9 @@
                         <div>
                             <div class="stat-label">Monthly Revenue</div>
                             <div class="stat-value" id="statRevenue">—</div>
-                            <div class="stat-trend up" id="statRevTrend"><i class="fas fa-arrow-up me-1"></i>8% vs last month</div>
+                            <div class="stat-trend" id="statRevTrend" style="color:var(--ov-gray)">vs last month</div>
                         </div>
-                        <div class="stat-icon"><i class="fas fa-sterling-sign"></i></div>
+                        <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
                     </div>
                 </div>
             </div>
@@ -215,35 +215,100 @@
 <div th:replace="~{fragments/layout :: scripts}"></div>
 
 <script>
+let revenueChartObj = null;
+let occupancyChartObj = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
     const user = OVAuth.getUser();
     if (user) {
         document.getElementById('welcomeName').textContent = user.firstName || user.username;
     }
-
-    // Initialize charts with sample data (will be replaced by API data when available)
-    initRevenueChart();
-    initOccupancyChart();
-    loadDashboardData();
+    await loadDashboardData();
+    document.getElementById('revenueRange').addEventListener('change', async () => {
+        await loadRevenueChart(parseInt(document.getElementById('revenueRange').value));
+    });
 });
 
-function initRevenueChart() {
+function fmtLKR(v) {
+    const n = Number(v) || 0;
+    if (n >= 1000000) return 'Rs.' + (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return 'Rs.' + (n / 1000).toFixed(0) + 'k';
+    return 'Rs.' + n.toFixed(0);
+}
+
+async function loadRevenueChart(months) {
     const ctx = document.getElementById('revenueChart');
     if (!ctx) return;
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    new Chart(ctx, {
+
+    // Build month labels going back N months
+    const labels = [], revenueData = [], occupancyData = [];
+    const now = new Date();
+    for (let i = months - 1; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        labels.push(d.toLocaleString('en-US', { month: 'short', year: '2-digit' }));
+        revenueData.push(0);
+        occupancyData.push(0);
+    }
+
+    try {
+        // Fetch bills for revenue
+        const billsRes = await api('/api/bills');
+        if (billsRes?.ok) {
+            const bills = await billsRes.json();
+            const billList = Array.isArray(bills) ? bills : (bills.content || []);
+            billList.forEach(b => {
+                if (b.paymentStatus !== 'PAID' && b.paymentStatus !== 'UNPAID') return;
+                const dateStr = b.billDate || b.createdAt;
+                if (!dateStr) return;
+                const d = new Date(dateStr);
+                for (let i = 0; i < months; i++) {
+                    const ref = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
+                    if (d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth()) {
+                        revenueData[i] += (b.totalAmount || b.total || 0);
+                        break;
+                    }
+                }
+            });
+        }
+
+        // Fetch reservations for occupancy %
+        const resRes = await api('/api/reservations');
+        const roomsRes = await api('/api/rooms');
+        if (resRes?.ok && roomsRes?.ok) {
+            const reservations = await resRes.json();
+            const rooms = await roomsRes.json();
+            const resList = Array.isArray(reservations) ? reservations : (reservations.content || []);
+            const totalRooms = Array.isArray(rooms) ? rooms.length : 1;
+            for (let i = 0; i < months; i++) {
+                const ref = new Date(now.getFullYear(), now.getMonth() - (months - 1 - i), 1);
+                const refEnd = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+                const occupied = resList.filter(r => {
+                    if (r.status === 'CANCELLED') return false;
+                    const cin = r.checkInDate ? new Date(r.checkInDate) : null;
+                    const cout = r.checkOutDate ? new Date(r.checkOutDate) : null;
+                    return cin && cout && cin <= refEnd && cout >= ref;
+                }).length;
+                occupancyData[i] = totalRooms > 0 ? Math.min(100, Math.round((occupied / totalRooms) * 100)) : 0;
+            }
+        }
+    } catch (e) {
+        console.warn('Revenue chart data error:', e);
+    }
+
+    if (revenueChartObj) revenueChartObj.destroy();
+    revenueChartObj = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: months,
+            labels,
             datasets: [{
-                label: 'Revenue (£)',
-                data: [42000,38000,55000,62000,48000,71000,83000,79000,65000,58000,52000,69000],
+                label: 'Revenue (LKR)',
+                data: revenueData,
                 backgroundColor: 'rgba(0,119,182,.7)',
                 borderRadius: 6,
                 borderSkipped: false
             },{
                 label: 'Occupancy %',
-                data: [65,58,72,80,62,85,92,88,78,70,64,82],
+                data: occupancyData,
                 type: 'line',
                 borderColor: '#c9a227',
                 backgroundColor: 'rgba(201,162,39,.1)',
@@ -264,7 +329,7 @@ function initRevenueChart() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => '£' + (v/1000) + 'k' },
+                    ticks: { callback: v => fmtLKR(v) },
                     grid: { color: 'rgba(0,0,0,.05)' }
                 },
                 y1: {
@@ -280,15 +345,16 @@ function initRevenueChart() {
     });
 }
 
-function initOccupancyChart() {
+function renderOccupancyChart(occupied, available, maintenance) {
     const ctx = document.getElementById('occupancyChart');
     if (!ctx) return;
-    new Chart(ctx, {
+    if (occupancyChartObj) occupancyChartObj.destroy();
+    occupancyChartObj = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: ['Occupied', 'Available', 'Maintenance'],
             datasets: [{
-                data: [68, 25, 7],
+                data: [occupied, available, maintenance],
                 backgroundColor: ['#0077b6', '#2d9f4e', '#f0ad4e'],
                 borderWidth: 0,
                 hoverOffset: 8
@@ -307,13 +373,53 @@ function initOccupancyChart() {
 
 async function loadDashboardData() {
     try {
-        // Load rooms
-        const roomsRes = await api('/api/rooms');
-        if (roomsRes?.ok) {
-            const rooms = await roomsRes.json();
-            const available = Array.isArray(rooms) ? rooms.filter(r => r.available).length : 0;
-            document.getElementById('statRooms').textContent = available;
-            document.getElementById('statTotalRooms').textContent = Array.isArray(rooms) ? rooms.length : 0;
+        // Load dashboard metrics (rooms, check-ins, revenue)
+        const metricsRes = await api('/api/dashboard/metrics');
+        if (metricsRes?.ok) {
+            const m = await metricsRes.json();
+
+            // Room stats
+            const total = m.totalRooms || 0;
+            const avail = m.availableRooms || 0;
+            const occupied = m.occupiedRooms || 0;
+            const maintenance = Math.max(0, total - avail - occupied);
+            document.getElementById('statRooms').textContent = avail;
+            document.getElementById('statTotalRooms').textContent = total;
+
+            // Occupancy chart with real data
+            renderOccupancyChart(occupied, avail, maintenance);
+
+            // Check-in / check-out stats
+            document.getElementById('statCheckins').textContent = m.todayCheckIns ?? 0;
+            document.getElementById('statCheckouts').textContent = m.todayCheckOuts ?? 0;
+            document.getElementById('actCheckins').textContent = (m.todayCheckIns ?? 0) + ' guests arriving today';
+            document.getElementById('actCheckouts').textContent = (m.todayCheckOuts ?? 0) + ' guests departing today';
+
+            // Revenue stat
+            const rev = Number(m.totalPaidRevenue) || 0;
+            document.getElementById('statRevenue').textContent = formatCurrency(rev);
+            document.getElementById('statRevTrend').textContent = 'paid revenue total';
+
+            // Pending count from status breakdown
+            const statusMap = m.reservationsByStatus || {};
+            const pending = statusMap['PENDING'] || 0;
+            document.getElementById('actPending').textContent = pending + ' awaiting confirmation';
+
+            // Total reservations this month
+            const allCount = Object.values(statusMap).reduce((s, c) => s + c, 0);
+            document.getElementById('statReservations').textContent = allCount;
+            document.getElementById('statResTrend').textContent = 'total reservations';
+        } else {
+            // Fallback: load rooms separately
+            const roomsRes = await api('/api/rooms');
+            if (roomsRes?.ok) {
+                const rooms = await roomsRes.json();
+                const roomList = Array.isArray(rooms) ? rooms : [];
+                const avail = roomList.filter(r => r.available).length;
+                document.getElementById('statRooms').textContent = avail;
+                document.getElementById('statTotalRooms').textContent = roomList.length;
+                renderOccupancyChart(roomList.length - avail, avail, 0);
+            }
         }
 
         // Load recent reservations
@@ -321,7 +427,6 @@ async function loadDashboardData() {
         if (resRes?.ok) {
             const reservations = await resRes.json();
             const list = Array.isArray(reservations) ? reservations : (reservations.content || []);
-            document.getElementById('statReservations').textContent = list.length;
 
             const tbody = document.getElementById('recentReservations');
             if (list.length === 0) {
@@ -337,18 +442,11 @@ async function loadDashboardData() {
                         <td><a href="${CTX}/reservations/view/${r.id}" class="btn btn-sm btn-outline-ocean">View</a></td>
                     </tr>`).join('');
             }
-
-            // Stats
-            const today = new Date().toISOString().split('T')[0];
-            const checkins = list.filter(r => r.checkInDate === today && r.status !== 'CANCELLED').length;
-            const checkouts = list.filter(r => r.checkOutDate === today).length;
-            const pending = list.filter(r => r.status === 'PENDING').length;
-            document.getElementById('statCheckins').textContent = checkins;
-            document.getElementById('statCheckouts').textContent = checkouts;
-            document.getElementById('actCheckins').textContent = checkins + ' guests arriving today';
-            document.getElementById('actCheckouts').textContent = checkouts + ' guests departing today';
-            document.getElementById('actPending').textContent = pending + ' awaiting confirmation';
         }
+
+        // Load revenue chart with real data
+        await loadRevenueChart(parseInt(document.getElementById('revenueRange').value) || 12);
+
     } catch (ex) {
         console.error('Dashboard load error:', ex);
     }

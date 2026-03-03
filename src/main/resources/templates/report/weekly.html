@@ -168,14 +168,14 @@ function renderWeek() {
             labels: days,
             datasets: [
                 { label: 'Bookings', data: bookingsPerDay, backgroundColor: 'rgba(0,119,182,0.7)', borderRadius: 6, yAxisID: 'y' },
-                { label: 'Revenue (£)', data: revPerDay, type: 'line', borderColor: '#c9a227', backgroundColor: 'transparent', tension: .4, yAxisID: 'y1' }
+                { label: 'Revenue (LKR)', data: revPerDay, type: 'line', borderColor: '#c9a227', backgroundColor: 'transparent', tension: .4, yAxisID: 'y1' }
             ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             scales: {
                 y: { beginAtZero: true, position: 'left', ticks: { stepSize: 1 } },
-                y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => '£' + v } }
+                y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => 'Rs.' + v } }
             }
         }
     });
